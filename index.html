@@ -71,9 +71,10 @@ dt{color:var(--mute);font-size:14px}dd{margin:0;font-weight:600;text-align:right
 .xr{display:none;gap:8px;flex-wrap:wrap}
 #xrmsg{font-size:14px;color:var(--mute);margin:0}
 #xrov{display:none;position:fixed;inset:0;pointer-events:none;flex-direction:column;justify-content:flex-end;background:transparent}
-#xbar{pointer-events:auto;display:flex;padding:12px 12px max(12px,env(safe-area-inset-bottom));gap:8px;flex-wrap:wrap;justify-content:center;background:rgba(10,14,16,.72);color:#fff;font:500 15px Inter,sans-serif}
-#xbar button{font:600 15px Inter,sans-serif;min-height:48px;padding:0 16px;border-radius:12px;border:0;background:#fff;color:#111}
-#xbar .t{width:100%;text-align:center}
+#xbar{pointer-events:auto;display:flex;padding:10px 10px max(10px,env(safe-area-inset-bottom));gap:6px;flex-wrap:wrap;justify-content:center;background:rgba(10,14,16,.72);color:#fff;font:500 15px Inter,sans-serif}
+#xbar button{font:600 14px Inter,sans-serif;min-height:44px;padding:0 12px;border-radius:12px;border:0;background:#fff;color:#111}
+#xbar .t{width:100%;text-align:center;line-height:1.35}
+#xend{background:#d8452b!important;color:#fff!important}
 .foot{padding:0 max(4vw,14px) 30px;color:var(--mute);font-size:14px;max-width:900px}
 .foot h2{font-size:20px;color:var(--ink);margin:18px 0 6px}
 #kv{position:fixed;inset:0;z-index:100;display:none;background:var(--bg);grid-template-columns:minmax(0,1fr) 380px}
@@ -161,9 +162,9 @@ dt{color:var(--mute);font-size:14px}dd{margin:0;font-weight:600;text-align:right
   <p><b>Kapsam:</b> Bu çalışma yalnızca ince menderesler, yani yüksekliği en fazla iki olan menderesler içindir: eksenin hiçbir aralığının üstünde ya da altında ikiden fazla yay bulunmaz. Daha yüksek genel menderesler için parça takımı da ortaya çıkan bağların sınıflandırılması da daha karmaşıktır.</p>
   <p>Kutudan bir parçayı tahtaya sürükle ya da önce parçaya, sonra tahtada istediğin yere dokun. Küçük parça (B) iki komşu noktayı, R<sub>r</sub> parçası 2r+2 noktayı kaplar; büyük parçaların çentiklerine küçük parçalar oturur. Yerleşmiş bir parçaya dokununca kalkar; başka yere dokununca taşınır, kutuya dokununca geri döner.</p>
   <p>Eksenin iki ucu, kesikli çizgiyle gösterildiği gibi dışarıdan dolaşan bir yayla birleşmiş sayılır. Her taşın bir yüzünde menderes, öbür yüzünde eksen üstten geçer; “Düzleştir” aracıyla bir kesişim iki yoldan düzleştirilir. Ad ve Conway gösterimi, Jones polinomu ve determinant iki köprülü bağlarla karşılaştırılarak bulunur; ayna görüntüsüne kadar geçerlidir.</p>
-  <p>3B sekmesinde parmakla ya da fareyle döndür, iki parmakla yakınlaştır. Taşa dokununca çevrilir; parçaya dokunup masada başka bir yere dokununca taşınır. AR (Android Chrome) ve VR (Quest tarayıcısı) aynı sekmeden açılır; claude.ai içinde açıkken çerçeve kamera ve XR izni vermediği için bu düğmeler yalnız sayfanın bağımsız kopyası https adresinden açıldığında çalışır. AR'da telefonu masaya doğrult, beyaz halka görününce ekrana dokun: yapboz gerçek boyutunda (24 mm aralıklı) masaya konur.</p>
+  <p>3B sekmesinde parmakla ya da fareyle döndür, iki parmakla yakınlaştır. Taşa dokununca çevrilir; parçaya dokunup masada başka bir yere dokununca taşınır. AR (Android Chrome ya da gözlük) ve VR (gözlüğün tarayıcısı) aynı sekmeden açılır; claude.ai içinde açıkken çerçeve kamera ve XR izni vermediği için bu düğmeler yalnız sayfanın bağımsız kopyası https adresinden açıldığında çalışır. İçeride yapboz bakışını izler: masaya bakıp tetiğe bas ya da ekrana dokun, oraya konur (gerçek boyut, 24 mm aralık). Parçayı kutudan tutup tahtada yerine götür ve bırak; taşa basınca çevrilir. Gözlükte pano tahtanın sağında, telefonda ekranın altındadır; “Düğümü gör” eğriyi tahtadan kaldırıp düğüme dönüştürür.</p>
 </div>
-<div id="xrov"><div id="xbar"><div class="t" id="xrt"></div><button id="xalt">Alterne</button><button id="xask">Hangi düğüm?</button><button id="xmove">Yeniden yerleştir</button><button id="xend">Çık</button></div></div>
+<div id="xrov"><div id="xbar"><div class="t" id="xrt"></div><button id="xask">Hangi düğüm?</button><button id="xsee">Düğümü gör</button><button id="xalt">Alterne</button><button id="xtool">Araç: çevir</button><button id="xundo">Geri al</button><button id="xmove">Yeniden yerleştir</button><button id="xend">Çık</button></div></div>
 <script>
 // Menderes dugum cekirdegi: ince menderesler, parca yerlesimi, Kauffman parantezi (kesit DP),
 // Jones polinomu, determinant, baglanma sayilari, iki kopru eslestirme ve Conway gosterimi.
@@ -845,6 +846,7 @@ window.Game = {
   setPreview(xu, side) { preview = armed ? candidate(armed.r, side, xu, armed.from) : null; return preview; },
   clearPreview() { preview = null; },
   get preview() { return preview; },
+  get msg() { return msg; },
   alt() { $("salt").click(); }, ask() { $("ask").click(); }, say,
 };
 
@@ -860,11 +862,14 @@ window.View3D = (() => {
   const LIB = "https://cdn.jsdelivr.net/npm/three@0.147.0/";
   const UNIT = 0.024;                                // 1 birim = 24 mm (basili yapboz)
   const T = 4 / 24, SF = 1.2 / 24, TT = 5.2 / 24, SH = 4 / 24, RH = 6.4 / 24, TRIM = 0.36, RW = 3.2 / 24;
+  const TOP = T + SF + TT;                           // tas ust yuzu (birim)
   const HEX = { "var(--red)": "#d8452b", "var(--axis)": "#1d1d1f", "var(--tile)": "#fbfaf6", "var(--b0)": "#cfe3ea", "var(--b1)": "#9cc3cf", "var(--b2)": "#6fa6ba", "var(--b3)": "#4f8aa1", "var(--b4)": "#3d7891" };
   const hex = c => HEX[c] || c;
   function col(c) { return new THREE.Color(hex(c)).convertSRGBToLinear(); }
-  let THREE, renderer, scene, camera, controls, root, board, ghost, table, reticle, hitSource = null, placed = false;
-  let shown = false, loading = null, active = false, mode = "3d", tiles = {}, pieceMeshes = [], flashP = null, flashT = 0, panel = null, trayG = null;
+  let THREE, renderer, scene, camera, controls, stage, root, board, ghost = null, table, trayG = null, panel = null, desk = null;
+  let shown = false, loading = null, active = false, mode = "3d", tiles = {}, flashP = null, flashT = 0, starting = false;
+  let X = null;                                      // acik XR oturumu
+  let K = null;                                      // XR icinde dugum gosterimi
   const box = $("view3d");
   const msg = t => { $("xrmsg").textContent = t; };
 
@@ -872,7 +877,8 @@ window.View3D = (() => {
   async function ensure() {
     if (THREE) return;
     if (!loading) loading = (async () => {
-      await load(LIB + "build/three.min.js"); await load(LIB + "examples/js/controls/OrbitControls.js");
+      if (!window.THREE) await load(LIB + "build/three.min.js");
+      if (!window.THREE.OrbitControls) await load(LIB + "examples/js/controls/OrbitControls.js");
       THREE = window.THREE; init();
     })();
     await loading;
@@ -888,7 +894,8 @@ window.View3D = (() => {
     const d2 = new THREE.DirectionalLight(0xffffff, 0.25); d2.position.set(0.5, 0.6, -0.4); scene.add(d2);
     table = new THREE.Mesh(new THREE.PlaneGeometry(4, 4), new THREE.MeshStandardMaterial({ color: col("#dcd7cb"), roughness: 1 }));
     table.rotation.x = -Math.PI / 2; table.position.y = -0.0005; scene.add(table);
-    root = new THREE.Group(); root.scale.setScalar(UNIT); scene.add(root);
+    stage = new THREE.Group(); scene.add(stage);                       // XR'de yerlestirilen butun: tahta + kutu + pano
+    root = new THREE.Group(); root.scale.setScalar(UNIT); stage.add(root);
     board = new THREE.Group(); root.add(board);
     controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true; controls.maxPolarAngle = Math.PI / 2 - 0.05; controls.minDistance = 0.08; controls.maxDistance = 2;
@@ -899,20 +906,21 @@ window.View3D = (() => {
     el.addEventListener("pointerdown", e => { down = { x: e.clientX, y: e.clientY }; });
     el.addEventListener("pointermove", e => { if (G.armed && mode === "3d") hover(rayFromEvent(e)); });
     el.addEventListener("pointerup", e => { if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) < 7) act(rayFromEvent(e)); down = null; });
+    _v = new THREE.Vector3();
     renderer.setAnimationLoop(loop);
-    $("bar").onclick = startAR; $("bvr").onclick = startVR; $("breset").onclick = resetView;
-    $("xalt").onclick = () => G.alt(); $("xask").onclick = () => G.ask(); $("xmove").onclick = () => { placed = false; root.visible = false; };
-    $("xend").onclick = () => renderer.xr.getSession() && renderer.xr.getSession().end();
-    $("xbar").addEventListener("beforexrselect", e => e.preventDefault());   // dugme dokunuslari XR secimi olmasin; bos ekran dokunuslari olsun
+    $("bar").onclick = () => begin("ar"); $("bvr").onclick = () => begin("vr"); $("breset").onclick = resetView;
+    const ob = { xask: "ask", xsee: "see", xalt: "alt", xtool: "tool", xundo: "undo", xmove: "place", xend: "end" };
+    for (const id in ob) if ($(id)) $(id).onclick = () => doBtn(ob[id]);
+    $("xbar").addEventListener("beforexrselect", e => e.preventDefault());   // dugmelere dokunus XR secimi olmasin
     checkXR();
   }
   async function checkXR() {
-    if (!navigator.xr) { $("bar").disabled = $("bvr").disabled = true; msg("Bu tarayıcıda WebXR yok. AR için Android'de Chrome, VR için Quest tarayıcısı gerekir."); return; }
+    if (!navigator.xr) { $("bar").disabled = $("bvr").disabled = true; msg(window.top !== window ? "Bu sayfa claude.ai içinde açık; çerçeve kamera ve XR izni vermiyor. AR ve VR için sayfanın bağımsız kopyasını https adresinden aç." : "Bu tarayıcıda WebXR yok. AR için Android'de Chrome, VR için gözlüğün tarayıcısı gerekir."); return; }
     let ar = false, vr = false;
     try { ar = await navigator.xr.isSessionSupported("immersive-ar"); } catch (e) { }
     try { vr = await navigator.xr.isSessionSupported("immersive-vr"); } catch (e) { }
     $("bar").disabled = !ar; $("bvr").disabled = !vr;
-    msg(ar || vr ? (ar ? "AR hazır: düğmeye bas, telefonu masaya doğrult." : "VR hazır.") : (window.top !== window ? "Bu sayfa claude.ai içinde açık; çerçeve kamera ve XR izni vermiyor. AR ve VR için sayfanın bağımsız kopyasını https adresinden aç." : "Bu cihaz AR ya da VR oturumu açamıyor."));
+    msg(ar || vr ? [ar && "AR hazır", vr && "VR hazır"].filter(Boolean).join(" · ") + ". İçeride parçayı kumanda, el ya da parmakla tut, tahtaya taşı, bırak; pano tahtanın sağında." : (window.top !== window ? "Bu sayfa claude.ai içinde açık; çerçeve kamera ve XR izni vermiyor. AR ve VR için sayfanın bağımsız kopyasını https adresinden aç." : "Bu cihaz AR ya da VR oturumu açamıyor."));
   }
   function resize() {
     if (!renderer || renderer.xr.isPresenting) return;
@@ -956,9 +964,10 @@ window.View3D = (() => {
     const t = new THREE.CanvasTexture(cv); t.flipY = false; t.encoding = THREE.sRGBEncoding; t.anisotropy = 4; return t;
   }
   function clear(g) { while (g.children.length) { const o = g.children.pop(); o.traverse(x => { if (x.userData.top) { x.userData.top.map.dispose(); x.userData.top.dispose(); } if (x.userData.own) x.geometry.dispose(); if (x.userData.ownMat) x.material.dispose(); }); } }
+  const stateKey = () => G.S.N + "|" + JSON.stringify(G.S.pieces) + "|" + G.S.states.join("");
   function build() {
     const S = G.S, N = S.N, sc = G.scene(), cx = (N + 1) / 2;
-    clear(board); tiles = {}; pieceMeshes = [];
+    clear(board); tiles = {};
     const armed = G.armed;
     S.pieces.forEach((q, i) => {
       const grp = new THREE.Group(); grp.position.x = q.a + q.r + 0.5 - cx; if (q.side < 0) grp.rotation.y = Math.PI;
@@ -966,12 +975,12 @@ window.View3D = (() => {
       const rg = new THREE.Mesh(cached("r" + q.r, () => ridgeGeo(q.r)), mat(sc.arcCol(q)));
       m.userData.i = rg.userData.i = i;
       if (armed && armed.from === i) { m.material = m.material.clone(); m.material.transparent = true; m.material.opacity = 0.3; m.userData.ownMat = true; }
-      grp.add(m, rg); board.add(grp); pieceMeshes.push(m, rg);
+      grp.add(m, rg); board.add(grp);
     });
     // serit
     const strip = new THREE.Mesh(new THREE.BoxGeometry(N + 0.1, SH, 0.68), mat("#cfcac0")); strip.userData.own = true;
     strip.position.set(0, T + SH / 2, 0); board.add(strip);
-    const seg = (x0, x1, c) => { if (x1 <= x0) return; const m = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0, 0.01, G.SW), mat(sc.axCol(c))); m.userData.own = true; m.geometry.translate(0, 0, 0); m.position.set((x0 + x1) / 2 - cx, T + SH + 0.005, 0); board.add(m); };
+    const seg = (x0, x1, c) => { if (x1 <= x0) return; const m = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0, 0.01, G.SW), mat(sc.axCol(c))); m.userData.own = true; m.position.set((x0 + x1) / 2 - cx, T + SH + 0.005, 0); board.add(m); };
     seg(0.45, 1 - G.HW, N); seg(N + G.HW, N + 0.55, N);
     for (let p = 1; p < N; p++) seg(p + G.HW, p + 1 - G.HW, p);
     // kapanis yayi: kesikli
@@ -996,19 +1005,15 @@ window.View3D = (() => {
       if (p === flashP && performance.now() - flashT < 260) m.rotation.x = Math.PI / 2 * (1 - (performance.now() - flashT) / 260);
       board.add(m); tiles[p] = m;
     }
-    // tutulan parcanin gölgesi
     ghost = null; ghostKey = ""; updateGhost();
     if (trayG) buildTray();
-    if (panel) drawPanel();
-    $("xrt").textContent = plain();
+    if (K && K.key !== stateKey()) knotStop();
+    if (panel) { placePanel(); drawPanel(); }
+    syncOverlay();
   }
-  function plain() {
-    const I = G.info(); if (!I.complete) return "Önce her noktayı doldur.";
-    if (!G.S.open) return "“Hangi düğüm?”e bas.";
-    const sub = "₀₁₂₃₄₅₆₇₈₉";
-    const [big] = G.label(I.id);
-    return big.replace(/<sub>(\d+)<\/sub>/g, (m, d) => [...d].map(x => sub[x]).join("")).replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim() + " · det " + I.inv.det + " · " + I.inv.comps + " bileşen";
-  }
+  // HTML etiketinden duz metin (alt simgeler korunur)
+  const SUB = "₀₁₂₃₄₅₆₇₈₉";
+  const plainHTML = s => String(s).replace(/<sub>(\d+)<\/sub>/g, (m, d) => [...d].map(x => SUB[x]).join("")).replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/\s+/g, " ").trim();
 
   // ---------- secme ----------
   const ray = () => new THREE.Raycaster();
@@ -1016,12 +1021,14 @@ window.View3D = (() => {
     const r = renderer.domElement.getBoundingClientRect(), rc = ray();
     rc.setFromCamera(new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1), camera); return rc;
   }
-  function boardPoint(rc) {                       // tahta duzlemi (y = T) ile kesisim, tahta birimlerinde
+  function boardPoint(rc) {                       // tahta duzlemi ile kesisim, tahta birimlerinde
     const inv = new THREE.Matrix4().copy(board.matrixWorld).invert();
     const o = rc.ray.origin.clone().applyMatrix4(inv), d = rc.ray.direction.clone().transformDirection(inv);
     if (Math.abs(d.y) < 1e-6) return null;
     const t = (T - o.y) / d.y; if (t < 0) return null;
-    return { xu: o.x + t * d.x + (G.S.N + 1) / 2, side: (o.z + t * d.z) < 0 ? 1 : -1 };
+    const x = o.x + t * d.x, z = o.z + t * d.z, N = G.S.N;
+    if (Math.abs(x) > (N + 1) / 2 + 3 || Math.abs(z) > N) return null;       // tahtadan cok uzak
+    return { xu: x + (N + 1) / 2, side: z < 0 ? 1 : -1 };
   }
   let ghostKey = "";
   function updateGhost() {
@@ -1029,11 +1036,21 @@ window.View3D = (() => {
     if (k === ghostKey) return; ghostKey = k;
     if (ghost) { board.remove(ghost); ghost.material.dispose(); ghost = null; }
     if (!pv) return;
-    ghost = new THREE.Mesh(cached("p" + pv.r, () => pieceGeo(pv.r)), new THREE.MeshStandardMaterial({ color: pv.ok ? 0x1a8f55 : 0xd8452b, transparent: true, opacity: 0.45 }));
+    ghost = new THREE.Mesh(cached("p" + pv.r, () => pieceGeo(pv.r)), new THREE.MeshStandardMaterial({ color: pv.ok ? 0x1a8f55 : 0xd8452b, transparent: true, opacity: 0.5 }));
     ghost.position.set(pv.a + pv.r + 0.5 - (G.S.N + 1) / 2, 0.02, 0); if (pv.side < 0) ghost.rotation.y = Math.PI; board.add(ghost);
   }
   function hover(rc) { const b = boardPoint(rc); if (b) { G.setPreview(b.xu, b.side); updateGhost(); } }
-  function act(rc) {
+  // isin neye degiyor
+  function hitTest(rc) {
+    if (panel && panel.mesh.visible) { const h = rc.intersectObject(panel.mesh)[0]; if (h) return { kind: "btn", k: btnAt(h.uv), d: h.distance }; }
+    if (trayG) { const h = rc.intersectObjects(trayG.children, true)[0]; if (h) return { kind: "tray", r: h.object.userData.r, d: h.distance }; }
+    const hs = rc.intersectObjects(board.children, true);
+    for (const h of hs) { const u = h.object.userData; if (u.p) return { kind: "tile", p: u.p, d: h.distance }; if (u.i != null) return { kind: "piece", i: u.i, d: h.distance }; }
+    if (hs[0]) return { kind: "board", d: hs[0].distance };
+    return null;
+  }
+  const same = (a, b) => a && b && a.kind === b.kind && a.r === b.r && a.i === b.i && a.p === b.p;
+  function act(rc) {                              // 3B sekmesi (fare / dokunus)
     if (trayG) { const h = rc.intersectObjects(trayG.children, true).find(x => x.object.userData.r != null); if (h) { const r = h.object.userData.r; G.armed = G.armed && G.armed.r === r && G.armed.from == null ? null : { r, from: null }; G.render(); return true; } }
     const hit = rc.intersectObjects(board.children, true).find(h => h.object.userData.p || h.object.userData.i != null);
     const u = hit ? hit.object.userData : {};
@@ -1046,134 +1063,374 @@ window.View3D = (() => {
     if (u.i != null) { G.pick(u.i); return true; }
     return false;
   }
+  function returnToBox() {
+    if (!G.armed) return;
+    if (G.armed.from != null) { G.push(); G.S.pieces.splice(G.armed.from, 1); G.say("Parça kutuya döndü."); }
+    G.armed = null; G.clearPreview(); G.render();
+  }
 
-  // ---------- XR ----------
-  const ctrl = [];
-  function setupControllers(withRays) {
-    for (let k = 0; k < 2; k++) {
-      const c = renderer.xr.getController(k);
-      c.addEventListener("select", () => onSelect(c));
-      if (withRays) {
-        const g = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, -1)]);
-        const l = new THREE.Line(g, new THREE.LineBasicMaterial({ color: 0xffffff })); l.scale.z = 3; l.name = "ray"; c.add(l);
-      }
-      scene.add(c); ctrl.push(c);
+  // ---------- XR: giris (kumanda, el, bakis, ekrana dokunus) ----------
+  function poseRay(frame, space) {
+    let p = null; try { p = frame.getPose(space, renderer.xr.getReferenceSpace()); } catch (e) { }
+    if (!p) return null;
+    const m = new THREE.Matrix4().fromArray(p.transform.matrix), rc = ray();
+    rc.ray.origin.setFromMatrixPosition(m); rc.ray.direction.set(0, 0, -1).transformDirection(m); return rc;
+  }
+  function ptrOf(src) {
+    let P = X.ptr.get(src);
+    if (!P) {
+      const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.Float32BufferAttribute([0, 0, 0, 0, 0, -1], 3));
+      const line = new THREE.Line(g, new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.85 })); line.frustumCulled = false; line.visible = false;
+      const dot = new THREE.Mesh(new THREE.SphereGeometry(0.006, 12, 8), new THREE.MeshBasicMaterial({ color: 0xffffff })); dot.visible = false;
+      scene.add(line, dot); P = { line, dot, down: null, rc: null, h: null, seen: 0, gone: 0 }; X.ptr.set(src, P);
     }
+    return P;
   }
-  function ctrlRay(c) {
-    const rc = ray(), m = new THREE.Matrix4().extractRotation(c.matrixWorld);
-    rc.ray.origin.setFromMatrixPosition(c.matrixWorld); rc.ray.direction.set(0, 0, -1).applyMatrix4(m); return rc;
+  function onDown(e) {
+    if (!X) return;
+    const src = e.inputSource, P = ptrOf(src);
+    if (P.down) return;
+    const type = e.type.replace("start", "");
+    if (X.kind === "ar" && !X.placed) { X.placed = true; P.down = { type, place: true }; drawPanel(); syncOverlay(); return; }
+    const rc = poseRay(e.frame, src.targetRaySpace) || P.rc; if (!rc) return;
+    stage.updateMatrixWorld(true);
+    const h = hitTest(rc), d = P.down = { type, t: performance.now(), h, drag: false };
+    if (!h) { if (G.armed) d.drag = true; return; }
+    if (h.kind === "btn") return;
+    if (h.kind === "tray") {
+      if (G.armed && G.armed.from != null) { d.ret = true; return; }              // tahtadaki parca kutuya
+      if (h.r == null) return;                                                    // tukenmis parca
+      if (G.armed && G.armed.from == null && G.armed.r === h.r) { d.cancel = true; d.drag = true; return; }
+      G.armed = { r: h.r, from: null }; d.drag = true; d.fresh = true; G.render(); return;
+    }
+    if (h.kind === "piece" && (!G.armed || G.armed.from === h.i)) {
+      if (G.armed) { d.cancel = true; d.drag = true; return; }
+      G.armed = { r: G.S.pieces[h.i].r, from: h.i }; d.drag = true; d.fresh = true; G.render(); return;
+    }
+    if (G.armed) { d.drag = true; return; }                                       // eldeki parca buraya
   }
-  function onSelect(c) {
-    if (mode === "ar" && !placed) {
-      if (reticle.visible) {
-        root.position.setFromMatrixPosition(reticle.matrix);
-        const cam = renderer.xr.getCamera(camera), cp = new THREE.Vector3().setFromMatrixPosition(cam.matrixWorld);
-        root.rotation.set(0, Math.atan2(cp.x - root.position.x, cp.z - root.position.z), 0);
-        root.visible = true; placed = true; reticle.visible = false;
+  function onUp(e) {
+    if (!X) return;
+    const src = e.inputSource, P = X.ptr.get(src); if (!P || !P.down) return;
+    const d = P.down; if (e.type.replace("end", "") !== d.type) return;
+    P.down = null;
+    if (d.place) return;
+    const rc = (e.frame && poseRay(e.frame, src.targetRaySpace)) || P.rc;
+    stage.updateMatrixWorld(true);
+    const h = rc ? hitTest(rc) : null;
+    if (d.h && d.h.kind === "btn") { if (h && h.kind === "btn" && h.k === d.h.k) doBtn(h.k); return; }
+    if (d.ret) { if (h && h.kind === "tray") returnToBox(); return; }
+    if (d.drag && G.armed) {
+      if ((d.fresh || d.cancel) && same(h, d.h)) {                                // kisa basis: alinan parca elde kalir / ayni parcaya basis birakir
+        if (d.cancel) G.armed = null;
+        G.clearPreview(); updateGhost(); G.render(); return;
+      }
+      if (h && h.kind === "tray") { returnToBox(); return; }
+      if (h && h.kind === "btn") { G.clearPreview(); updateGhost(); G.render(); return; }
+      const b = rc && boardPoint(rc);
+      if (b) { const ok = G.dropAt(b.xu, b.side); G.clearPreview(); if (!ok) G.render(); }
+      else { G.clearPreview(); G.render(); }
+      return;
+    }
+    if (d.h && d.h.kind === "tile" && h && h.kind === "tile" && h.p === d.h.p) G.tileAct(h.p);
+  }
+  function onSources(e) { for (const s of e.removed) { const P = X && X.ptr.get(s); if (P) P.gone = X.frameNo || 1; } }
+
+  // ---------- XR: yerlesim ----------
+  let _v = null;
+  function headPos() { return new THREE.Vector3().setFromMatrixPosition(X.head); }
+  function placeFront(dist, drop) {                // basin onune, yatay bakis yonunde
+    const hp = headPos(), fw = new THREE.Vector3(0, 0, -1).transformDirection(X.head); fw.y = 0;
+    if (fw.lengthSq() < 1e-6) fw.set(0, 0, -1); fw.normalize();
+    stage.position.copy(hp).addScaledVector(fw, dist); stage.position.y = hp.y - drop;
+    stage.rotation.set(0, Math.atan2(-fw.x, -fw.z), 0);
+  }
+  function faceUser() { const hp = headPos(); stage.rotation.set(0, Math.atan2(hp.x - stage.position.x, hp.z - stage.position.z), 0); }
+  function placeVR() {
+    placeFront(0.62, 0.55);
+    if (X.ref === "local-floor") stage.position.y = Math.min(Math.max(stage.position.y, 0.6), 1.15);
+    table.position.y = X.ref === "local-floor" ? 0 : stage.position.y - 0.75;
+    X.placed = true;
+  }
+  const maxUpR = () => G.S.mode === "fiziksel" ? 4.6 : Math.min(G.S.N / 2 - 1, 7) + 0.6;
+
+  // ---------- XR: pano ----------
+  const PW = 1024, PH = 704;
+  const BTN = [
+    ["ask", () => G.S.open ? "Sonucu gizle" : "Hangi düğüm?"],
+    ["see", () => K ? "Düğümü gizle" : (comps() > 1 ? "Bağı gör" : "Düğümü gör")],
+    ["alt", () => "Alterne"],
+    ["tool", () => "Araç: " + (G.S.tool === "flip" ? "çevir" : "düzleştir")],
+    ["undo", () => "Geri al"],
+    ["rnd", () => "Rastgele menderes"],
+    ["clear", () => "Dağıt"],
+    ["place", () => X && X.kind === "ar" ? "Yeniden yerleştir" : "Önüme getir"],
+    ["end", () => "Çık"],
+  ];
+  const comps = () => { const I = G.info(); return I.complete && I.inv ? I.inv.comps : 1; };
+  const brect = i => [32 + (i % 3) * 324, 322 + Math.floor(i / 3) * 124, 304, 104];
+  function btnAt(uv) {
+    const x = uv.x * PW, y = (1 - uv.y) * PH;
+    for (let i = 0; i < BTN.length; i++) { const [bx, by, w, h] = brect(i); if (x >= bx && x <= bx + w && y >= by && y <= by + h) return BTN[i][0]; }
+    return null;
+  }
+  function makePanel() {
+    const cv = document.createElement("canvas"); cv.width = PW; cv.height = PH;
+    const tex = new THREE.CanvasTexture(cv); tex.encoding = THREE.sRGBEncoding; tex.anisotropy = 4;
+    const w = X.kind === "vr" ? 0.56 : 0.42, h = w * PH / PW;
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: tex, transparent: true }));
+    stage.add(mesh); panel = { cv, tex, mesh, w, h, hover: null };
+    placePanel(); drawPanel();
+  }
+  function placePanel() {                         // tahtanin sagina, kullaniciya donuk ve geriye yatik
+    const k = root.scale.x, tilt = 0.32, yaw = -0.48, halfW = ((G.S.N + 1) / 2 + 0.8) * k;
+    const ax = new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw)), nrm = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw));
+    const c = new THREE.Vector3(halfW + 0.03, 0.02 + panel.h / 2 * Math.cos(tilt), -0.12).addScaledVector(ax, panel.w / 2).addScaledVector(nrm, -panel.h / 2 * Math.sin(tilt));
+    panel.mesh.rotation.set(-tilt, yaw, 0, "YXZ"); panel.mesh.position.copy(c);
+    panel.mesh.visible = !(X && X.overlay);
+  }
+  function rr(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
+  function wrap(c, text, x, y, maxW, lh, maxL) {
+    let line = "", n = 0;
+    for (const w of text.split(" ")) {
+      const test = line ? line + " " + w : w;
+      if (line && c.measureText(test).width > maxW) { if (n === maxL - 1) { c.fillText(line + " …", x, y); return; } c.fillText(line, x, y); y += lh; n++; line = w; }
+      else line = test;
+    }
+    c.fillText(line, x, y);
+  }
+  function fitFont(c, text, weight, size, maxW) { let s = size; do { c.font = `${weight} ${s}px Inter, system-ui, sans-serif`; s -= 2; } while (c.measureText(text).width > maxW && s > 18); }
+  function xrStatus() {
+    if (!X) return "";
+    const touch = X.overlay;
+    if (X.kind === "ar" && !X.placed) return touch ? "Telefonu masaya doğrult: yapboz bulduğu yüzeyde geziyor. Ekrana dokununca oraya konur." : "Masaya bak: yapboz bakışınla geziyor. Tetiğe basınca oraya konur.";
+    if (G.msg) return G.msg;
+    const press = touch ? "dokun" : "tetiğe bas";
+    if (G.armed) return `${G.armed.r ? "R" + G.armed.r : "Küçük parça"} elinde: tahtada yerine götürüp bırak ya da oraya ${press}. Kutuya bırakırsan geri döner.`;
+    const I = G.info();
+    if (!I.complete) return touch ? "Öndeki kutudan bir parçaya dokun, parmağını kaldırmadan tahtaya sürükle, bırak." : "Öndeki kutudan bir parçayı tetikle tut, tahtaya taşı, bırak. Taşa tetikle basınca çevrilir.";
+    if (K) return K.cap;
+    return I.curves === 1 ? `Menderes tamam (${G.S.N} kesişim). Taşları çevir; sonucu “Hangi düğüm?” gösterir.` : `${I.curves} ayrı eğri: menderes değil, ama bağ yine hesaplanır.`;
+  }
+  function resultLines() {
+    const I = G.info();
+    if (!I.complete) return { a: "Önce her noktayı doldur", dim: true };
+    if (!G.S.open) return { a: "Sonuç için “Hangi düğüm?”", dim: true };
+    const [big] = G.label(I.id), nm = window.KnotView && KnotView.nameOf ? KnotView.nameOf(I.id) : "";
+    return { a: plainHTML(big) + (nm ? " · " + nm : ""), b: "det " + I.inv.det + " · " + I.inv.comps + " bileşen" };
+  }
+  function drawPanel() {
+    if (!panel) return;
+    const { cv, tex } = panel, c = cv.getContext("2d");
+    c.clearRect(0, 0, PW, PH); c.fillStyle = "rgba(18,23,26,0.94)"; rr(c, 0, 0, PW, PH, 36); c.fill();
+    c.textAlign = "left"; c.fillStyle = "#9aa7ad"; c.font = "600 28px Inter, system-ui, sans-serif"; c.fillText("Menderes düğüm yapbozu", 40, 54);
+    c.fillStyle = "#ffffff"; c.font = "500 31px Inter, system-ui, sans-serif"; wrap(c, xrStatus(), 40, 104, 944, 40, 3);
+    const R = resultLines();
+    if (R.dim) { c.fillStyle = "#7f8b90"; c.font = "500 34px Inter, system-ui, sans-serif"; c.fillText(R.a, 40, 250); }
+    else { c.fillStyle = "#ffffff"; fitFont(c, R.a, 700, 54, 944); c.fillText(R.a, 40, 244); c.fillStyle = "#c9d3d6"; c.font = "500 30px Inter, system-ui, sans-serif"; c.fillText(R.b, 40, 290); }
+    BTN.forEach(([k, lab], i) => {
+      const [x, y, w, h] = brect(i), hv = panel.hover === k, on = (k === "see" && K) || (k === "ask" && G.S.open);
+      c.fillStyle = k === "end" ? (hv ? "#ef6a4b" : "#c8402a") : on ? (hv ? "#2f9b6a" : "#1a7f52") : (hv ? "#4d5e66" : "#2c363b"); rr(c, x, y, w, h, 18); c.fill();
+      if (hv) { c.strokeStyle = "#ffffff"; c.lineWidth = 5; c.stroke(); }
+      c.fillStyle = "#ffffff"; c.textAlign = "center"; fitFont(c, lab(), 600, 34, w - 24); c.fillText(lab(), x + w / 2, y + h / 2 + 12); c.textAlign = "left";
+    });
+    tex.needsUpdate = true;
+  }
+  function syncOverlay() {
+    if (!X || !X.overlay) return;
+    const R = resultLines();
+    $("xrt").textContent = xrStatus() + (R.dim ? "" : "  ·  " + R.a + " · " + R.b);
+    $("xask").textContent = G.S.open ? "Sonucu gizle" : "Hangi düğüm?";
+    if ($("xsee")) $("xsee").textContent = K ? "Düğümü gizle" : (comps() > 1 ? "Bağı gör" : "Düğümü gör");
+    if ($("xtool")) $("xtool").textContent = "Araç: " + (G.S.tool === "flip" ? "çevir" : "düzleştir");
+  }
+  function doBtn(k) {
+    switch (k) {
+      case "ask": G.ask(); break;
+      case "see": knotToggle(); break;
+      case "alt": G.alt(); break;
+      case "tool": G.S.tool = G.S.tool === "flip" ? "smooth" : "flip"; G.render(); break;
+      case "undo": $("undo").click(); break;
+      case "rnd": $("rnd").click(); break;
+      case "clear": $("clear").click(); break;
+      case "place": if (X) { if (X.kind === "ar") X.placed = false; else placeVR(); } break;
+      case "end": if (X) X.session.end(); return;
+    }
+    drawPanel(); syncOverlay();
+  }
+
+  // ---------- XR: dugumu gor ----------
+  function knotToggle() {
+    if (K) { knotStop(); return; }
+    const I = G.info();
+    if (!I.complete) { G.say("Önce her noktayı doldur."); return; }
+    if (!window.KnotView || !KnotView.buildPaths) return;
+    if (!G.S.open) G.ask();
+    const { paths, N } = KnotView.buildPaths(200), cx = (N + 1) / 2;
+    const base = paths.map(p => p.pts.map(v => [v[0] - cx, v[2], v[1]]));
+    const dark = X && X.kind === "vr";
+    const pal = ["#d8452b", dark ? "#efe9dc" : "#1d1d1f", "#2a7de1", "#1a9e5b", "#9b51e0", "#e0a400"];
+    const kmats = paths.map(p => new THREE.MeshStandardMaterial({ color: col(pal[p.comp % 6]), roughness: 0.42, metalness: 0.05 }));
+    const pivot = new THREE.Group(), g = new THREE.Group(); pivot.add(g); root.add(pivot);
+    const Rt = Math.min(6.5, 0.34 * (N + 2)), H = TOP + Rt + 1.6;
+    K = { key: stateKey(), base, pivot, g, mats: kmats, meshes: [], phase: "lift", t0: performance.now(), sim: null, frame: 0, Rt, H, s: 1, cap: "1 · Eğri tahtadan kalkıyor" };
+    drawPanel(); syncOverlay();
+  }
+  function knotStop() {
+    if (!K) return;
+    root.remove(K.pivot); for (const m of K.meshes) m.geometry.dispose(); K.mats.forEach(m => m.dispose()); K = null;
+    drawPanel(); syncOverlay();
+  }
+  function knotDraw(L) {
+    for (const m of K.meshes) { K.g.remove(m); m.geometry.dispose(); }
+    K.meshes = L.map((pts, k) => {
+      const curve = new THREE.CatmullRomCurve3(pts.map(p => new THREE.Vector3(p[0], p[1], p[2])), true, "centripetal");
+      const m = new THREE.Mesh(new THREE.TubeGeometry(curve, Math.min(520, pts.length * 2), 0.08, 8, true), K.mats[k]);
+      K.g.add(m); return m;
+    });
+  }
+  function simList() { const out = []; for (const c of K.sim.comps) { const a = []; for (let k = 0; k < c.n; k++) { const i = 3 * (c.s + k); a.push([K.sim.P[i], K.sim.P[i + 1], K.sim.P[i + 2]]); } out.push(a); } return out; }
+  function knotFrame() {
+    if (K.key !== stateKey()) { knotStop(); return; }
+    const t = performance.now() - K.t0;
+    if (K.phase === "lift") {
+      const k = Math.min(1, t / 1600), e = k * k * (3 - 2 * k), lift = (K.H - TOP - 0.6) * e;
+      const L = K.base.map(p => p.map(v => [v[0], TOP + 0.08 + lift + v[1] * (0.12 + 0.23 * e), v[2]]));
+      knotDraw(L);
+      if (k >= 1) {
+        K.sim = KnotView.makeSim(L); K.phase = "relax"; K.t0 = performance.now(); K.cap = "2 · İp geriliyor; kendi içinden hiç geçmiyor";
+        let cx = 0, cy = 0, cz = 0, n = 0; for (const p of L) for (const v of p) { cx += v[0]; cy += v[1]; cz += v[2]; n++; }
+        K.c = new THREE.Vector3(cx / n, cy / n, cz / n); K.pos = K.c.clone(); K.pivot.position.copy(K.pos); K.g.position.copy(K.c).multiplyScalar(-1);
+        drawPanel(); syncOverlay();
       }
       return;
     }
-    const rc = ctrlRay(c);
-    if (panel && panelHit(rc)) return;
-    act(rc);
-  }
-  async function begin(kind) {
-    await ensure();
-    const opt = kind === "ar"
-      ? { requiredFeatures: ["hit-test"], optionalFeatures: ["dom-overlay", "local-floor"], domOverlay: { root: $("xrov") } }
-      : { optionalFeatures: ["local-floor", "bounded-floor", "hand-tracking"] };
-    let session;
-    try { session = await navigator.xr.requestSession("immersive-" + kind, opt); }
-    catch (e) { msg("Oturum açılamadı: " + e.message); return; }
-    mode = kind; renderer.xr.enabled = true;
-    renderer.xr.setReferenceSpaceType(kind === "ar" ? "local" : "local-floor");
-    await renderer.xr.setSession(session);
-    if (!ctrl.length) setupControllers(kind === "vr");
-    ctrl.forEach(c => { const l = c.getObjectByName("ray"); if (l) l.visible = kind === "vr"; });
-    scene.background = null; buildTray();
-    if (kind === "ar") {
-      $("xrov").style.display = "flex"; table.visible = false; root.visible = false; placed = false;
-      reticle = reticle || (() => { const m = new THREE.Mesh(new THREE.RingGeometry(0.05, 0.065, 40).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xffffff })); m.matrixAutoUpdate = false; m.visible = false; scene.add(m); return m; })();
-      const vs = await session.requestReferenceSpace("viewer");
-      hitSource = await session.requestHitTestSource({ space: vs });
-      root.scale.setScalar(UNIT);
-    } else {
-      scene.background = new THREE.Color(0x20262a); table.visible = true; table.material.color.copy(col("#3a3f42"));
-      const desk = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.04, 0.6), new THREE.MeshStandardMaterial({ color: 0xb08a5a, roughness: 0.8 }));
-      desk.position.set(0, 0.73, -0.55); desk.name = "desk"; scene.add(desk);
-      root.position.set(0, 0.751, -0.5); root.rotation.set(0, 0, 0); root.scale.setScalar(UNIT * 1.4 * 16 / Math.max(16, G.S.N + 2)); root.visible = true;
-      makePanel();
+    if (K.phase === "relax") {
+      const tb = performance.now(); while (!K.sim.done && performance.now() - tb < 6) K.sim.step();
+      if (++K.frame % 2 && !K.sim.done) return;
+      const L = simList();
+      let cx = 0, cy = 0, cz = 0, n = 0; for (const p of L) for (const v of p) { cx += v[0]; cy += v[1]; cz += v[2]; n++; }
+      cx /= n; cy /= n; cz /= n; let r = 0; for (const p of L) for (const v of p) r = Math.max(r, Math.hypot(v[0] - cx, v[1] - cy, v[2] - cz));
+      const sT = Math.max(0.5, Math.min(4, K.Rt / (r + 0.2)));
+      K.s += (sT - K.s) * 0.06; K.pos.lerp(new THREE.Vector3(0, K.H, 0), 0.05);
+      K.pivot.position.copy(K.pos); K.g.scale.setScalar(K.s); K.g.position.set(-cx * K.s, -cy * K.s, -cz * K.s);
+      knotDraw(L);
+      if (K.sim.done || t > 40000) { K.phase = "done"; const R = resultLines(); K.cap = "3 · Sonuç: " + (R.dim ? plainHTML(G.label(G.info().id)[0]) : R.a); drawPanel(); syncOverlay(); }
+      return;
     }
-    session.addEventListener("end", () => {
-      mode = "3d"; hitSource = null; $("xrov").style.display = "none"; if (reticle) reticle.visible = false;
-      const desk = scene.getObjectByName("desk"); if (desk) scene.remove(desk);
-      if (panel) { scene.remove(panel.mesh); panel = null; } if (trayG) { root.remove(trayG); trayG = null; }
-      table.visible = true; table.material.color.copy(col("#dcd7cb")); root.visible = true; root.position.set(0, 0, 0); root.rotation.set(0, 0, 0); root.scale.setScalar(UNIT);
-      renderer.xr.enabled = false; applyBg(); resize(); resetView(); build();
-    });
-    build();
+    K.pivot.rotation.y += 0.005;
   }
-  const startAR = () => begin("ar"), startVR = () => begin("vr");
-  // XR icinde parca kutusu: tahtanin onunde (alt tarafta) birer ornek
+
+  // ---------- XR: oturum ----------
+  async function begin(kind) {
+    if (X || starting) return; starting = true;
+    try {
+      await ensure();
+      const opt = kind === "ar"
+        ? { optionalFeatures: ["hit-test", "dom-overlay", "local-floor", "hand-tracking"], domOverlay: { root: $("xrov") } }
+        : { optionalFeatures: ["local-floor", "hand-tracking"] };
+      let session;
+      try { session = await navigator.xr.requestSession("immersive-" + kind, opt); }
+      catch (e) { msg("Oturum açılamadı: " + e.message); return; }
+      let ref = "local";
+      if (kind === "vr") { try { await session.requestReferenceSpace("local-floor"); ref = "local-floor"; } catch (e) { } }
+      renderer.xr.enabled = true; renderer.xr.setReferenceSpaceType(ref);
+      try { await renderer.xr.setSession(session); }
+      catch (e) { msg("XR başlatılamadı: " + e.message); renderer.xr.enabled = false; try { await session.end(); } catch (_) { } return; }
+      X = { session, kind, ref, placed: false, overlay: !!session.domOverlayState, hitSource: null, ptr: new Map(), head: null, frameNo: 0, sig: "" };
+      mode = kind;
+      session.addEventListener("selectstart", onDown); session.addEventListener("squeezestart", onDown);
+      session.addEventListener("selectend", onUp); session.addEventListener("squeezeend", onUp);
+      session.addEventListener("inputsourceschange", onSources);
+      session.addEventListener("end", onEnd);
+      G.armed = null; G.clearPreview();
+      if (kind === "ar") {
+        try { const vs = await session.requestReferenceSpace("viewer"); X.hitSource = await session.requestHitTestSource({ space: vs }); } catch (e) { X.hitSource = null; }
+        scene.background = null; table.visible = false; root.scale.setScalar(UNIT);
+        if (X.overlay) $("xrov").style.display = "flex";
+      } else {
+        scene.background = new THREE.Color(0x20262a); table.visible = true; table.material.color.copy(col("#3a3f42"));
+        root.scale.setScalar(UNIT * 1.4 * 16 / Math.max(16, G.S.N + 2));
+        const k = root.scale.x, N = G.S.N, back = maxUpR() + 1.2, front = 2 * maxUpR() + 7.5;
+        desk = new THREE.Mesh(new THREE.BoxGeometry((N + 5) * k, 0.04, (back + front) * k), new THREE.MeshStandardMaterial({ color: col("#b08a5a"), roughness: 0.8 }));
+        desk.position.set(0, -0.021, (front - back) / 2 * k); stage.add(desk);
+      }
+      makePanel(); buildTray(); build();
+    } finally { starting = false; }
+  }
+  function onEnd() {
+    const s = X; X = null; mode = "3d"; knotStop();
+    if (s) for (const P of s.ptr.values()) { scene.remove(P.line, P.dot); P.line.geometry.dispose(); }
+    $("xrov").style.display = "none";
+    if (panel) { stage.remove(panel.mesh); panel.tex.dispose(); panel.mesh.geometry.dispose(); panel = null; }
+    if (desk) { stage.remove(desk); desk.geometry.dispose(); desk = null; }
+    if (trayG) { clear(trayG); root.remove(trayG); trayG = null; }
+    stage.position.set(0, 0, 0); stage.rotation.set(0, 0, 0); root.scale.setScalar(UNIT);
+    table.visible = true; table.position.y = -0.0005; table.material.color.copy(col("#dcd7cb"));
+    renderer.xr.enabled = false; G.armed = null; G.clearPreview(); applyBg(); resize(); resetView(); build();
+  }
+  // XR icinde parca kutusu: tahtanin onunde birer ornek
   function buildTray() {
     if (mode === "3d") return;
     if (!trayG) { trayG = new THREE.Group(); root.add(trayG); }
     clear(trayG);
     const S = G.S, rs = S.mode === "fiziksel" ? [0, 1, 2, 4] : [0, 1, 2, 3, 4].filter(r => 2 * r + 2 <= S.N);
-    const lowR = Math.max(1.0, ...S.pieces.filter(q => q.side < 0).map(q => q.r + 0.57)) + 1.3;
-    let x = -(G.S.N + 1) / 2 + 0.6;
+    const lowR = maxUpR() + 1.3;                     // sabit: parcalar yerlesince kutu kaymasin
+    const total = rs.reduce((a, r) => a + 2 * (r + 0.57) + 0.5, -0.5);
+    let x = -total / 2;
     for (const r of rs) {
       const left = (S.mode === "fiziksel" ? ({ 0: 13, 1: 1, 2: 1, 4: 1 })[r] : Infinity) - S.pieces.filter(q => q.r === r).length;
       const R = r + 0.57, m = new THREE.Mesh(cached("p" + r, () => pieceGeo(r)), left > 0 ? mat(G.FILL[Math.min(r, 4)]) : mat("#9a9a9a"));
       m.position.set(x + R, 0, lowR + R + 0.2); m.rotation.y = Math.PI; m.userData.r = left > 0 ? r : null;
-      if (G.armed && G.armed.from == null && G.armed.r === r) { m.position.y = 0.25; }
+      if (G.armed && G.armed.from == null && G.armed.r === r) m.position.y = 0.6;
       trayG.add(m); x += 2 * R + 0.5;
     }
   }
-  // VR paneli
-  const BTN = [["alt", "Alterne"], ["ask", "Hangi düğüm?"], ["tool", "Çevir / Düzleştir"], ["rnd", "Rastgele menderes"], ["end", "Çık"]];
-  function makePanel() {
-    const cv = document.createElement("canvas"); cv.width = 1024; cv.height = 560;
-    const tex = new THREE.CanvasTexture(cv); tex.encoding = THREE.sRGBEncoding;
-    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 0.4375), new THREE.MeshBasicMaterial({ map: tex }));
-    mesh.position.set(0, 1.32, -0.95); mesh.rotation.x = -0.2; scene.add(mesh);
-    panel = { cv, tex, mesh }; drawPanel();
-  }
-  function drawPanel() {
-    const { cv, tex } = panel, c = cv.getContext("2d");
-    c.fillStyle = "#14191c"; c.fillRect(0, 0, 1024, 560);
-    c.fillStyle = "#fff"; c.font = "600 44px Inter, sans-serif"; c.fillText("Menderes düğüm yapbozu", 40, 72);
-    c.font = "500 36px Inter, sans-serif"; c.fillStyle = "#e7ecee";
-    const t = plain(); let y = 140, line = "";
-    for (const w of t.split(" ")) { if (c.measureText(line + w).width > 940) { c.fillText(line, 40, y); y += 46; line = ""; } line += w + " "; }
-    c.fillText(line, 40, y);
-    c.font = "500 26px Inter, sans-serif"; c.fillStyle = "#9aa7ad"; c.fillText("Araç: " + (G.S.tool === "flip" ? "çevir" : "düzleştir") + " · taşa ya da parçaya ışını tutup tetiğe bas", 40, 260);
-    BTN.forEach(([k, l], i) => { const x = 40 + (i % 3) * 320, yy = 300 + Math.floor(i / 3) * 120; c.fillStyle = k === "end" ? "#d8452b" : "#2c363b"; c.fillRect(x, yy, 300, 96); c.fillStyle = "#fff"; c.font = "600 32px Inter, sans-serif"; c.fillText(l, x + 20, yy + 60); });
-    tex.needsUpdate = true;
-  }
-  function panelHit(rc) {
-    const h = rc.intersectObject(panel.mesh)[0]; if (!h) return false;
-    const x = h.uv.x * 1024, y = (1 - h.uv.y) * 560;
-    BTN.forEach(([k], i) => {
-      const bx = 40 + (i % 3) * 320, by = 300 + Math.floor(i / 3) * 120;
-      if (x >= bx && x <= bx + 300 && y >= by && y <= by + 96) {
-        if (k === "alt") G.alt(); else if (k === "ask") G.ask();
-        else if (k === "tool") { G.S.tool = G.S.tool === "flip" ? "smooth" : "flip"; G.render(); }
-        else if (k === "rnd") $("rnd").click(); else if (k === "end") renderer.xr.getSession().end();
-      }
-    });
-    return true;
-  }
 
   // ---------- dongu ----------
+  function xrFrame(frame) {
+    const ref = renderer.xr.getReferenceSpace(); X.frameNo++;
+    const vp = frame.getViewerPose(ref);
+    if (vp) X.head = (X.head || new THREE.Matrix4()).fromArray(vp.transform.matrix);
+    if (!X.head) return;
+    if (X.kind === "vr" && !X.placed) placeVR();
+    if (X.kind === "ar" && !X.placed) {
+      let hit = null;
+      if (X.hitSource) { const r = frame.getHitTestResults(X.hitSource); if (r.length) { const p = r[0].getPose(ref); if (p) hit = p.transform.position; } }
+      if (hit) { stage.position.set(hit.x, hit.y, hit.z); faceUser(); } else placeFront(0.45, 0.35);
+    }
+    stage.updateMatrixWorld(true);
+    // isaretciler
+    let hoverK = null, driver = null;
+    for (const src of X.session.inputSources) {
+      const P = ptrOf(src); P.seen = X.frameNo;
+      const rm = src.targetRayMode, vis = rm === "tracked-pointer" || rm === "gaze";
+      const rc = poseRay(frame, src.targetRaySpace); if (rc) P.rc = rc;
+      const live = rc && (X.placed || X.kind === "vr");
+      const h = live && (vis || P.down) ? hitTest(rc) : null; P.h = h;
+      if (vis && rc) {
+        const len = h ? h.d : 1.2, o = rc.ray.origin, e = _v.copy(rc.ray.direction).multiplyScalar(len).add(o), a = P.line.geometry.attributes.position;
+        a.setXYZ(0, o.x, o.y, o.z); a.setXYZ(1, e.x, e.y, e.z); a.needsUpdate = true;
+        P.line.visible = rm !== "gaze"; P.dot.visible = true; P.dot.position.copy(e); P.dot.scale.setScalar(rm === "gaze" ? 1.6 : 1);
+      } else { P.line.visible = P.dot.visible = false; }
+      if (h && h.kind === "btn") hoverK = h.k;
+      if (live && G.armed) { if (P.down && P.down.drag) driver = P; else if (vis && !driver) driver = P; }
+    }
+    for (const [s, P] of X.ptr) {
+      if (P.seen !== X.frameNo) P.line.visible = P.dot.visible = false;
+      if (P.gone && X.frameNo - P.gone > 30 && !P.down) { scene.remove(P.line, P.dot); P.line.geometry.dispose(); X.ptr.delete(s); }
+    }
+    if (driver && driver.rc && !(driver.h && (driver.h.kind === "btn" || driver.h.kind === "tray"))) {
+      const b = boardPoint(driver.rc); if (b) G.setPreview(b.xu, b.side); else G.clearPreview();
+    } else if (G.preview) G.clearPreview();
+    updateGhost();
+    if (panel && hoverK !== panel.hover) { panel.hover = hoverK; drawPanel(); }
+    if (X.frameNo % 15 === 0) { const sig = xrStatus() + "|" + X.placed; if (sig !== X.sig) { X.sig = sig; drawPanel(); syncOverlay(); } }
+  }
   function loop(t, frame) {
     if (mode === "3d") controls.update();
-    if (frame && hitSource && mode === "ar" && !placed) {
-      const res = frame.getHitTestResults(hitSource);
-      if (res.length) { const pose = res[0].getPose(renderer.xr.getReferenceSpace()); reticle.visible = true; reticle.matrix.fromArray(pose.transform.matrix); }
-      else reticle.visible = false;
-    }
+    if (frame && X) xrFrame(frame);
+    if (K) knotFrame();
     if (flashP && tiles[flashP]) {
       const k = (performance.now() - flashT) / 260;
       tiles[flashP].rotation.x = k < 1 ? Math.PI / 2 * (1 - k) : 0; if (k >= 1) flashP = null;
@@ -1186,12 +1443,30 @@ window.View3D = (() => {
     async show() {
       active = true; box.style.display = "block";
       try { await ensure(); } catch (e) { box.innerHTML = `<p style="padding:20px">3B kitaplığı yüklenemedi: ${e.message}</p>`; return; }
-      applyBg(); resize(); if (!shown) { resetView(); shown = true; } build();
+      if (!X) { applyBg(); resize(); if (!shown) { resetView(); shown = true; } }
+      build();
     },
     hide() { active = false; },
     update() { if (THREE && active) build(); },
     flash(p) { flashP = p; flashT = performance.now(); },
     _proj(x, y, z) { const v = new THREE.Vector3(x - (G.S.N + 1) / 2, y, z).applyMatrix4(board.matrixWorld).project(camera); const r = renderer.domElement.getBoundingClientRect(); return [r.left + (v.x + 1) / 2 * r.width, r.top + (1 - v.y) / 2 * r.height]; },
+    // sinama kancalari (WebXR oykunucusu icin)
+    _session() { return X && X.session; },
+    _overlay(on) { if (!X) return; X.overlay = on; $("xrov").style.display = on ? "flex" : "none"; if (panel) placePanel(); syncOverlay(); },
+    _xr() {
+      if (!X) return null;
+      const hp = X.head ? headPos() : null;
+      return { kind: X.kind, ref: X.ref, placed: X.placed, overlay: X.overlay, head: hp && [hp.x, hp.y, hp.z], panel: !!(panel && panel.mesh.visible), hover: panel && panel.hover, knot: K && K.phase, cap: K && K.cap, status: xrStatus(), result: resultLines(), sources: X.session.inputSources.length, ptrs: X.ptr.size };
+    },
+    _world(what, a) {                                // hedefin dunya konumu (XR referans uzayi)
+      stage.updateMatrixWorld(true); const N = G.S.N, cx = (N + 1) / 2;
+      if (what === "btn") { const i = BTN.findIndex(b => b[0] === a), [x, y, w, h] = brect(i); const u = (x + w / 2) / PW, v = 1 - (y + h / 2) / PH; return new THREE.Vector3((u - 0.5) * panel.w, (v - 0.5) * panel.h, 0).applyMatrix4(panel.mesh.matrixWorld).toArray(); }
+      if (what === "tray") { const m = trayG.children.find(c => c.userData.r === a); const b = new THREE.Box3().setFromObject(m); return b.getCenter(new THREE.Vector3()).toArray(); }
+      if (what === "tile") return new THREE.Vector3(a - cx, TOP, 0).applyMatrix4(root.matrixWorld).toArray();
+      if (what === "pt") return new THREE.Vector3(a[0] - cx, a[2] != null ? a[2] : T, a[1]).applyMatrix4(root.matrixWorld).toArray();
+      if (what === "knot") { if (!K) return null; const b = new THREE.Box3(); for (const m of K.meshes) b.expandByObject(m); return [b.getCenter(new THREE.Vector3()).toArray(), b.getSize(new THREE.Vector3()).toArray()]; }
+      return null;
+    },
   };
 })();
 
@@ -1267,7 +1542,7 @@ window.KnotView = (() => {
   }
 
   // ---------- tahtadaki egriyi uc boyutlu yola cevir ----------
-  function buildPaths() {
+  function buildPaths(B) {
     const I = G.info(), S = G.S, N = S.N, arcs = I.arcs, tr = I.inv.tr, slot = tr.slot;
     const U = {}, L = {};
     for (const [a, b] of arcs.up) { U[a] = b; U[b] = a; }
@@ -1316,7 +1591,7 @@ window.KnotView = (() => {
       res.push({ pts, comp, len });
     }
     // esit aralikli yeniden ornekleme
-    const budget = (innerWidth < 700 || (navigator.hardwareConcurrency || 8) <= 4) ? 230 : 320;
+    const budget = B || ((innerWidth < 700 || (navigator.hardwareConcurrency || 8) <= 4) ? 230 : 320);
     const total = res.reduce((a, r) => a + r.len, 0), sp = Math.max(0.2, total / budget);
     for (const r of res) {
       const P = r.pts, n = P.length, cum = [0];
@@ -1563,7 +1838,7 @@ window.KnotView = (() => {
     try { await ensure(); } catch (e) { caption("3B kitaplığı yüklenemedi: " + e.message); return; }
     initGL(); size(); $("kvclose").focus(); start();
   }
-  return { open, close, platSVG, _sim: () => sim, _init: () => lastInit };
+  return { open, close, platSVG, buildPaths, makeSim, nameOf, _sim: () => sim, _init: () => lastInit };
 })();
 
 </script>
