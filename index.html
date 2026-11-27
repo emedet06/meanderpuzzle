@@ -76,6 +76,18 @@ dt{color:var(--mute);font-size:14px}dd{margin:0;font-weight:600;text-align:right
 #xbar .t{width:100%;text-align:center}
 .foot{padding:0 max(4vw,14px) 30px;color:var(--mute);font-size:14px;max-width:900px}
 .foot h2{font-size:20px;color:var(--ink);margin:18px 0 6px}
+#kv{position:fixed;inset:0;z-index:100;display:none;background:var(--bg);grid-template-columns:minmax(0,1fr) 380px}
+#kv.on{display:grid}
+.kvstage{position:relative;min-height:0}
+.kvstage canvas{display:block;width:100%;height:100%;touch-action:none}
+.kvphase{position:absolute;left:14px;top:14px;right:14px;font:600 16px Sora,Inter,sans-serif;pointer-events:none}
+.kvphase:not(:empty){display:inline-block;right:auto;background:color-mix(in srgb,var(--panel) 85%,transparent);border:1px solid var(--line);padding:6px 12px;border-radius:10px}
+.kvside{overflow:auto;padding:20px;border-left:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;gap:10px}
+.kvside .big{margin-top:0}
+.kvplat svg{display:block;width:100%;height:auto;max-height:200px}
+.kvsum{display:flex;align-items:center;gap:8px}.kvsum svg{flex:1;min-width:0}.kvsum b{font:600 22px Sora,sans-serif;color:var(--mute)}
+#see{width:100%;margin:2px 0 12px}
+@media(max-width:820px){#kv{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,56vh) auto;overflow:auto}.kvside{border-left:0;border-top:1px solid var(--line)}}
 @keyframes pulse{0%{transform:scale(1)}40%{transform:scale(1.06)}100%{transform:scale(1)}}
 .won .big,#banner.won b{animation:pulse .7s ease}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
@@ -146,6 +158,7 @@ dt{color:var(--mute);font-size:14px}dd{margin:0;font-weight:600;text-align:right
 </main>
 <div class="foot">
   <h2>Nasıl oynanır</h2>
+  <p><b>Kapsam:</b> Bu çalışma yalnızca ince menderesler, yani yüksekliği en fazla iki olan menderesler içindir: eksenin hiçbir aralığının üstünde ya da altında ikiden fazla yay bulunmaz. Daha yüksek genel menderesler için parça takımı da ortaya çıkan bağların sınıflandırılması da daha karmaşıktır.</p>
   <p>Kutudan bir parçayı tahtaya sürükle ya da önce parçaya, sonra tahtada istediğin yere dokun. Küçük parça (B) iki komşu noktayı, R<sub>r</sub> parçası 2r+2 noktayı kaplar; büyük parçaların çentiklerine küçük parçalar oturur. Yerleşmiş bir parçaya dokununca kalkar; başka yere dokununca taşınır, kutuya dokununca geri döner.</p>
   <p>Eksenin iki ucu, kesikli çizgiyle gösterildiği gibi dışarıdan dolaşan bir yayla birleşmiş sayılır. Her taşın bir yüzünde menderes, öbür yüzünde eksen üstten geçer; “Düzleştir” aracıyla bir kesişim iki yoldan düzleştirilir. Ad ve Conway gösterimi, Jones polinomu ve determinant iki köprülü bağlarla karşılaştırılarak bulunur; ayna görüntüsüne kadar geçerlidir.</p>
   <p>3B sekmesinde parmakla ya da fareyle döndür, iki parmakla yakınlaştır. Taşa dokununca çevrilir; parçaya dokunup masada başka bir yere dokununca taşınır. AR (Android Chrome) ve VR (Quest tarayıcısı) aynı sekmeden açılır; claude.ai içinde açıkken çerçeve kamera ve XR izni vermediği için bu düğmeler yalnız sayfanın bağımsız kopyası https adresinden açıldığında çalışır. AR'da telefonu masaya doğrult, beyaz halka görününce ekrana dokun: yapboz gerçek boyutunda (24 mm aralıklı) masaya konur.</p>
@@ -654,7 +667,7 @@ function renderCard() {
   const minc = id.kind === "ikikopru" ? id.crossings : (id.parts ? id.parts.reduce((a, x) => a + (x.conway ? x.conway.reduce((s, y) => s + y, 0) : 0), 0) : null);
   if (minc != null && id.kind !== "unknot") rows += `<dt>En az kesişim</dt><dd>${minc}</dd>`;
   const legend = v.comps > 1 ? `<div class="legend">${Array.from({ length: v.comps }, (_, i) => `<span><i style="background:${COMP[i % COMP.length]}"></i>${i + 1}. bileşen</span>`).join("")}</div>` : "";
-  res.innerHTML = `<div class="big">${big}</div><p class="sub">${sub}</p><dl>${rows}</dl><div class="jones">V(t) = ${jonesHTML(v.V)}</div>${legend}<p class="note">Ad ve Conway gösterimi Jones polinomu ve determinant iki köprülü bağlarla karşılaştırılarak bulunur; ayna görüntüsüne kadar geçerlidir.</p>`;
+  res.innerHTML = `<div class="big">${big}</div><p class="sub">${sub}</p><button class="b primary" id="see">${v.comps > 1 ? "Bağı gör" : "Düğümü gör"}</button><dl>${rows}</dl><div class="jones">V(t) = ${jonesHTML(v.V)}</div>${legend}<p class="note">Ad ve Conway gösterimi Jones polinomu ve determinant iki köprülü bağlarla karşılaştırılarak bulunur; ayna görüntüsüne kadar geçerlidir.</p>`;
 }
 function renderBanner() {
   const b = $("banner");
@@ -787,6 +800,7 @@ $("sknot").onclick = () => { push(); S.states = C.altStates(S.N); S.states[S.N -
 $("srnd").onclick = () => { push(); S.states = S.states.map(s => (s === "NW" || s === "NE") ? s : "vh"[Math.random() * 2 | 0]); render(); };
 $("undo").onclick = () => { if (hist.length) { restore(hist.pop()); armed = null; render(); } };
 $("ask").onclick = () => { S.open = !S.open; render(); };
+$("res").addEventListener("click", e => { if (e.target.id === "see" && window.KnotView) KnotView.open(); });
 // bulmaca
 function makeTarget() {
   for (let t = 0; t < 60; t++) {
@@ -1179,6 +1193,377 @@ window.View3D = (() => {
     flash(p) { flashP = p; flashT = performance.now(); },
     _proj(x, y, z) { const v = new THREE.Vector3(x - (G.S.N + 1) / 2, y, z).applyMatrix4(board.matrixWorld).project(camera); const r = renderer.domElement.getBoundingClientRect(); return [r.left + (v.x + 1) / 2 * r.width, r.top + (1 - v.y) / 2 * r.height]; },
   };
+})();
+
+</script>
+<script>
+window.KnotView = (() => {
+  const G = window.Game, $ = id => document.getElementById(id);
+  const LIB = "https://cdn.jsdelivr.net/npm/three@0.147.0/";
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let THREE, ren, scene, cam, ctl, boardG, tubeG, raf = 0, run = 0, sim = null, phase = "", t0 = 0, paused = false, userHold = false;
+  let paths = [], colors = [], lastFit = null;
+
+  const css = v => { const e = document.createElement("i"); e.style.color = v; document.body.appendChild(e); const c = getComputedStyle(e).color; e.remove(); return c; };
+  const load = src => new Promise((ok, no) => { const s = document.createElement("script"); s.src = src; s.onload = ok; s.onerror = () => no(new Error(src)); document.head.appendChild(s); });
+  async function ensure() {
+    if (!window.THREE) await load(LIB + "build/three.min.js");
+    if (!window.THREE.OrbitControls) await load(LIB + "examples/js/controls/OrbitControls.js");
+    THREE = window.THREE;
+  }
+
+  // ---------- 4-plat: tablodaki standart resim (dogrulandi: parantez rasyonel yumakla ayni) ----------
+  function platSVG(t, cols) {
+    const k = t.length, W = 0.9, GAP = 0.45, bg = css("var(--panel)");
+    const cr = []; t.forEach((a, r) => { for (let i = 0; i < a; i++) cr.push({ i: r % 2 === 0 ? 1 : 0, s: r % 2 === 0 ? 1 : -1, r }); });
+    // bilesenler: sinir dugumleri (b, j)
+    const nB = cr.length + 1, par = Array.from({ length: nB * 4 }, (_, i) => i);
+    const f = x => par[x] === x ? x : (par[x] = f(par[x])), u = (a, b) => { par[f(a)] = f(b); };
+    cr.forEach((c, b) => { for (let j = 0; j < 4; j++) { if (j === c.i) u(b * 4 + j, (b + 1) * 4 + j + 1); else if (j === c.i + 1) u(b * 4 + j, (b + 1) * 4 + j - 1); else u(b * 4 + j, (b + 1) * 4 + j); } });
+    u(0, 1); u(2, 3); const B = cr.length * 4;
+    if (k % 2) { u(B, B + 1); u(B + 2, B + 3); } else { u(B, B + 3); u(B + 1, B + 2); }
+    const roots = []; const colOf = node => { const r = f(node); let i = roots.indexOf(r); if (i < 0) { roots.push(r); i = roots.length - 1; } return cols[i % cols.length]; };
+    let x = 0.8, under = "", over = "", boxes = "", lines = "", lastR = -1, rx0 = 0;
+    const sw = 0.17, seg = (d, c) => `<path d="${d}" stroke="${c}" stroke-width="${sw}" fill="none" stroke-linecap="round"/>`;
+    const closeBox = (r, x1) => { const top = r % 2 === 0 ? 0.62 : -0.38, h = 1.76; boxes += `<rect x="${rx0 - 0.12}" y="${top}" width="${x1 - rx0 + 0.24}" height="${h}" rx="0.2" fill="none" stroke="var(--mute)" stroke-width="0.04" stroke-dasharray="0.14 0.1"/><text x="${(rx0 + x1) / 2}" y="${r % 2 === 0 ? 2.95 : -0.6}" font-size="0.5" text-anchor="middle" fill="var(--mute)" font-family="Inter,sans-serif">${t[r]}</text>`; };
+    cr.forEach((c, b) => {
+      if (c.r !== lastR) {
+        if (lastR >= 0) { closeBox(lastR, x); for (let j = 0; j < 4; j++) lines += seg(`M${x} ${j}L${x + GAP} ${j}`, colOf(b * 4 + j)); x += GAP; }
+        lastR = c.r; rx0 = x;
+      }
+      for (let j = 0; j < 4; j++) if (j !== c.i && j !== c.i + 1) lines += seg(`M${x} ${j}L${x + W} ${j}`, colOf(b * 4 + j));
+      const dn = `M${x} ${c.i}C${x + W / 2} ${c.i} ${x + W / 2} ${c.i + 1} ${x + W} ${c.i + 1}`, up = `M${x} ${c.i + 1}C${x + W / 2} ${c.i + 1} ${x + W / 2} ${c.i} ${x + W} ${c.i}`;
+      const cd = colOf(b * 4 + c.i), cu = colOf(b * 4 + c.i + 1);
+      const [o, oc, un, uc] = c.s > 0 ? [dn, cd, up, cu] : [up, cu, dn, cd];
+      under += seg(un, uc); over += `<path d="${o}" stroke="${bg}" stroke-width="${sw + 0.2}" fill="none"/>` + seg(o, oc);
+      x += W;
+    });
+    closeBox(lastR, x);
+    const c0 = colOf(0), c2 = colOf(2), e = cr.length * 4;
+    let caps = seg(`M0.8 0A0.5 0.5 0 0 0 0.8 1`, c0) + seg(`M0.8 2A0.5 0.5 0 0 0 0.8 3`, c2);
+    if (k % 2) caps += seg(`M${x} 0A0.5 0.5 0 0 1 ${x} 1`, colOf(e)) + seg(`M${x} 2A0.5 0.5 0 0 1 ${x} 3`, colOf(e + 2));
+    else caps += seg(`M${x} 1A0.5 0.5 0 0 1 ${x} 2`, colOf(e + 1)) + seg(`M${x} 0A1.5 1.5 0 0 1 ${x} 3`, colOf(e));
+    const right = k % 2 ? 0.7 : 1.7;
+    return `<svg viewBox="-0.1 -1.1 ${x + right + 0.2} 4.5" role="img" aria-label="Conway C(${t.join(",")}) standart diyagramı">${boxes}${caps}${lines}${under}${over}</svg>`;
+  }
+  const circleSVG = (n, cols) => `<svg viewBox="0 0 ${n * 3.2} 3" role="img" aria-label="${n === 1 ? "çember" : "ayrık iki çember"}">${Array.from({ length: n }, (_, i) => `<circle cx="${1.6 + i * 3.2}" cy="1.5" r="1.1" fill="none" stroke="${cols[i % cols.length]}" stroke-width="0.17"/>`).join("")}</svg>`;
+  function tablePicture(id, cols) {
+    const one = (x, c) => x.p === 1 ? circleSVG(1, c) : platSVG(x.conway, c);
+    switch (id.kind) {
+      case "unknot": return circleSVG(1, cols);
+      case "unlink": return circleSVG(2, cols);
+      case "ikikopru": return platSVG(id.conway, cols);
+      case "toplam": return `<div class="kvsum">${one(id.parts[0], cols)}<b>#</b>${one(id.parts[1], cols)}</div>`;
+      case "split": return `<div class="kvsum">${one(id.parts[0], cols)}<b>⊔</b>${circleSVG(1, [cols[1] || cols[0]])}</div>`;
+      default: return "";
+    }
+  }
+  function nameOf(id) {
+    const n = id.name || (id.kind === "unknot" ? "0_1" : "");
+    if (n === "3_1") return "yonca düğümü";
+    if (n === "4_1") return "sekiz düğümü";
+    if (id.kind === "ikikopru" && id.conway.length === 1) return id.p === 2 ? "Hopf bağı" : `T(2,${id.p}) tor ${id.p % 2 ? "düğümü" : "bağı"}`;
+    return "";
+  }
+
+  // ---------- tahtadaki egriyi uc boyutlu yola cevir ----------
+  function buildPaths() {
+    const I = G.info(), S = G.S, N = S.N, arcs = I.arcs, tr = I.inv.tr, slot = tr.slot;
+    const U = {}, L = {};
+    for (const [a, b] of arcs.up) { U[a] = b; U[b] = a; }
+    for (const [a, b] of arcs.dn) { L[a] = b; L[b] = a; }
+    const depth = Math.max(1, ...arcs.dn.map(([a, b]) => (b - a) / 2)) + 0.9;
+    const STR = { E: "W", W: "E", N: "S", S: "N" }, SM = { NE: { N: "E", E: "N", S: "W", W: "S" }, NW: { N: "W", W: "N", S: "E", E: "S" } };
+    const DIR = { N: [0, -1], S: [0, 1], W: [-1, 0], E: [1, 0] };
+    const through = (p, s) => { const st = S.states[p - 1]; return (st === "v" || st === "h") ? STR[s] : SM[st][s]; };
+    const other = (p, s) => s === "N" ? [U[p], "N"] : s === "S" ? [L[p], "S"] : s === "E" ? (p < N ? [p + 1, "W"] : [1, "W"]) : (p > 1 ? [p - 1, "E"] : [N, "E"]);
+    function edgePts(p, s, q) {
+      const out = [];
+      if (s === "N" || s === "S") {
+        const c = (p + q) / 2, r = Math.abs(q - p) / 2, sg = s === "N" ? -1 : 1, K = Math.max(8, Math.ceil(Math.PI * r / 0.06));
+        for (let k = 1; k < K; k++) { const th = Math.PI * k / K, a = p < q ? Math.PI - th : th; out.push([c + r * Math.cos(a), sg * r * Math.sin(a)]); }
+      } else if ((s === "E" && p === N) || (s === "W" && p === 1)) {
+        let pts = [[N + 0.5, 0], [N + 0.9, 0.4], [N + 0.9, depth - 0.4], [N + 0.5, depth], [0.5, depth], [0.1, depth - 0.4], [0.1, 0.4], [0.5, 0]];
+        if (s === "W") pts = pts.reverse();
+        let pr = [p, 0];
+        for (const q2 of pts) { const d = Math.hypot(q2[0] - pr[0], q2[1] - pr[1]), K = Math.max(1, Math.ceil(d / 0.06)); for (let k = 1; k <= K; k++) out.push([pr[0] + (q2[0] - pr[0]) * k / K, pr[1] + (q2[1] - pr[1]) * k / K]); pr = q2; }
+      } else { for (let k = 1; k < 16; k++) out.push([p + (q - p) * k / 16, 0]); }
+      return out;
+    }
+    const seen = new Set(), res = [];
+    for (let p0 = 1; p0 <= N; p0++) for (const s0 of ["N", "E", "S", "W"]) {
+      if (seen.has(p0 + s0)) continue;
+      const pts = [], marks = [];
+      let p = p0, s = s0;
+      const comp = tr.edgeComp[slot[p + s]];
+      do {
+        seen.add(p + s);
+        const [q, t] = other(p, s); seen.add(q + t);
+        for (const [x, y] of edgePts(p, s, q)) pts.push([x, y, 0]);
+        const u = through(q, t), st = S.states[q - 1];
+        if (st === "v" || st === "h") { const mer = t === "N" || t === "S"; marks.push([pts.length, (st === "v") === mer ? 1 : -1]); pts.push([q, 0, 0]); }
+        else { const a = DIR[t], b = DIR[u]; pts.push([q + 0.2 * (a[0] + b[0]), 0.2 * (a[1] + b[1]), 0]); }
+        p = q; s = u;
+      } while (!(p === p0 && s === s0));
+      // capraz tumsekler: ust kol +1, alt kol -1, 0.6 birim icinde yumusak
+      const n = pts.length, cum = [0];
+      for (let i = 1; i < n; i++) cum.push(cum[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+      const len = cum[n - 1] + Math.hypot(pts[0][0] - pts[n - 1][0], pts[0][1] - pts[n - 1][1]);
+      for (const [m, sg] of marks) for (let i = 0; i < n; i++) {
+        let d = Math.abs(cum[i] - cum[m]); d = Math.min(d, len - d);
+        if (d < 0.6) pts[i][2] += sg * 0.5 * (1 + Math.cos(Math.PI * d / 0.6));
+      }
+      res.push({ pts, comp, len });
+    }
+    // esit aralikli yeniden ornekleme
+    const budget = (innerWidth < 700 || (navigator.hardwareConcurrency || 8) <= 4) ? 230 : 320;
+    const total = res.reduce((a, r) => a + r.len, 0), sp = Math.max(0.2, total / budget);
+    for (const r of res) {
+      const P = r.pts, n = P.length, cum = [0];
+      for (let i = 1; i <= n; i++) { const a = P[i - 1], b = P[i % n]; cum.push(cum[i - 1] + Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2])); }
+      const m = Math.max(24, Math.round(cum[n] / sp)), out = [];
+      let j = 0;
+      for (let k = 0; k < m; k++) {
+        const s = cum[n] * k / m; while (cum[j + 1] < s) j++;
+        const a = P[j], b = P[(j + 1) % n], w = (s - cum[j]) / (cum[j + 1] - cum[j] || 1);
+        out.push([a[0] + (b[0] - a[0]) * w, a[1] + (b[1] - a[1]) * w, a[2] + (b[2] - a[2]) * w]);
+      }
+      r.pts = out;
+    }
+    return { paths: res, N };
+  }
+
+  // ---------- gevseme: ip gibi, kendi icinden asla gecmeden ----------
+  function segDist(P, a, b, c, d) {
+    const ux = P[b] - P[a], uy = P[b + 1] - P[a + 1], uz = P[b + 2] - P[a + 2], vx = P[d] - P[c], vy = P[d + 1] - P[c + 1], vz = P[d + 2] - P[c + 2];
+    const wx = P[a] - P[c], wy = P[a + 1] - P[c + 1], wz = P[a + 2] - P[c + 2];
+    const A = ux * ux + uy * uy + uz * uz, B = ux * vx + uy * vy + uz * vz, Cc = vx * vx + vy * vy + vz * vz, Dd = ux * wx + uy * wy + uz * wz, E = vx * wx + vy * wy + vz * wz;
+    const den = A * Cc - B * B; let s = den > 1e-12 ? (B * E - Cc * Dd) / den : 0; s = Math.max(0, Math.min(1, s));
+    let t = Cc > 1e-12 ? (B * s + E) / Cc : 0;
+    if (t < 0) { t = 0; s = A > 1e-12 ? Math.max(0, Math.min(1, -Dd / A)) : 0; } else if (t > 1) { t = 1; s = A > 1e-12 ? Math.max(0, Math.min(1, (B - Dd) / A)) : 0; }
+    const dx = wx + s * ux - t * vx, dy = wy + s * uy - t * vy, dz = wz + s * uz - t * vz;
+    SD[0] = s; SD[1] = t; SD[2] = dx; SD[3] = dy; SD[4] = dz;
+    return Math.sqrt(dx * dx + dy * dy + dz * dz);
+  }
+  const SD = new Float64Array(5);
+  let lastInit = null, KR1 = 0.0004, KR2 = 0.004, KS = 0.35, KS2 = 0.06, KB = 0.1, KC = 0.5, SHRINK = 0.12, TENS = 0.6;
+  const setK = o => { ({ KR1 = KR1, KR2 = KR2, KS = KS, KS2 = KS2, KB = KB, KC = KC, SHRINK = SHRINK, TENS = TENS } = o); };
+  function makeSim(list) {
+    lastInit = JSON.parse(JSON.stringify(list));
+    const comps = []; let n = 0; const arr = [];
+    for (const p of list) { comps.push({ s: n, n: p.length }); for (const v of p) arr.push(v[0], v[1], v[2]); n += p.length; }
+    const P = new Float64Array(arr), F = new Float64Array(3 * n), Pold = new Float64Array(P);
+    const cmp = new Int32Array(n), ix = new Int32Array(n), nx = new Int32Array(n), pv = new Int32Array(n);
+    comps.forEach((c, ci) => { for (let k = 0; k < c.n; k++) { const i = c.s + k; cmp[i] = ci; ix[i] = k; nx[i] = c.s + (k + 1) % c.n; pv[i] = c.s + (k - 1 + c.n) % c.n; } });
+    const meanEdge = () => { let s = 0; for (let i = 0; i < n; i++) { const j = nx[i]; s += Math.hypot(P[3 * j] - P[3 * i], P[3 * j + 1] - P[3 * i + 1], P[3 * j + 2] - P[3 * i + 2]); } return s / n; };
+    let L0 = meanEdge(); const L0i = L0;
+    const ring = (i, j) => { if (cmp[i] !== cmp[j]) return 1e9; const m = comps[cmp[i]].n, d = Math.abs(ix[i] - ix[j]); return Math.min(d, m - d); };
+    let d0 = 1e9;
+    for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) if (ring(i, j) > 3) d0 = Math.min(d0, segDist(P, 3 * i, 3 * nx[i], 3 * j, 3 * nx[j]));
+    const dmin = Math.min(0.2, 0.85 * d0), stepMax = 0.38 * dmin, dc = 1.8 * dmin;
+    let mode = "tight", steps = 0, calm = 0, energy = 1, reverts = 0, lastDm = 0, stall = 0, kx = 3, near = 1, best = 1e9, settleAt = 0;
+    const setRange = () => { kx = Math.max(3, Math.ceil(2.2 * dmin / L0)); near = (dc + 3 * L0) ** 2; };
+    setRange();
+    function violations() {
+      const bad = new Set();
+      for (let i = 0; i < n; i++) {
+        const ax = P[3 * i], ay = P[3 * i + 1], az = P[3 * i + 2];
+        for (let j = i + 1; j < n; j++) {
+          const rx = ax - P[3 * j], ry = ay - P[3 * j + 1], rz = az - P[3 * j + 2];
+          if (rx * rx + ry * ry + rz * rz > near || ring(i, j) <= kx) continue;
+          const sd = segDist(P, 3 * i, 3 * nx[i], 3 * j, 3 * nx[j]);
+          if (sd < lastDm) lastDm = sd;
+          if (sd < dmin) { bad.add(i); bad.add(nx[i]); bad.add(j); bad.add(nx[j]); }
+        }
+      }
+      return bad;
+    }
+    function step() {
+      F.fill(0);
+      const round = false, kr = KR1;
+      for (let i = 0; i < n; i++) {
+        const ax = P[3 * i], ay = P[3 * i + 1], az = P[3 * i + 2];
+        for (let j = i + 1; j < n; j++) {
+          const rg = ring(i, j); if (rg <= (round ? 2 : kx)) continue;
+          const rx = ax - P[3 * j], ry = ay - P[3 * j + 1], rz = az - P[3 * j + 2], d2 = rx * rx + ry * ry + rz * rz;
+          if (rg > kx && d2 < near) {
+            const sd = segDist(P, 3 * i, 3 * nx[i], 3 * j, 3 * nx[j]);
+            if (sd < dc) {                         // temas: yakin iki parcayi birbirinden it
+              const g = KC * (dc - sd) / (sd + 1e-9), s1 = SD[0], t1 = SD[1], ii = nx[i], jj = nx[j];
+              for (let a = 0; a < 3; a++) { const f = g * SD[2 + a]; F[3 * i + a] += f * (1 - s1); F[3 * ii + a] += f * s1; F[3 * j + a] -= f * (1 - t1); F[3 * jj + a] -= f * t1; }
+            }
+          }
+          // sikilasma: yalniz yakin itme (1/d^4); yuvarlama: uzun erimli itme (1/d^2)
+          if (!round && d2 > 9 * dc * dc) continue;
+          const inv = round ? kr / (d2 * Math.sqrt(d2) + 1e-12) : kr / (d2 * d2 * Math.sqrt(d2) + 1e-12);
+          F[3 * i] += rx * inv; F[3 * i + 1] += ry * inv; F[3 * i + 2] += rz * inv;
+          F[3 * j] -= rx * inv; F[3 * j + 1] -= ry * inv; F[3 * j + 2] -= rz * inv;
+        }
+      }
+      for (let i = 0; i < n; i++) {
+        const j = nx[i], dx = P[3 * j] - P[3 * i], dy = P[3 * j + 1] - P[3 * i + 1], dz = P[3 * j + 2] - P[3 * i + 2], l = Math.hypot(dx, dy, dz) || 1e-9, f = round ? KS2 : KS * (l - L0) / l;   // yuvarlamada uzunluk serbest: yay yalniz ceker
+        F[3 * i] += dx * f; F[3 * i + 1] += dy * f; F[3 * i + 2] += dz * f; F[3 * j] -= dx * f; F[3 * j + 1] -= dy * f; F[3 * j + 2] -= dz * f;
+        const p = pv[i];
+        for (let a = 0; a < 3; a++) F[3 * i + a] += KB * (P[3 * p + a] + P[3 * j + a] - 2 * P[3 * i + a]);
+      }
+      Pold.set(P);
+      for (let i = 0; i < n; i++) {
+        let vx = F[3 * i], vy = F[3 * i + 1], vz = F[3 * i + 2];
+        const m = Math.hypot(vx, vy, vz); if (m > stepMax) { vx *= stepMax / m; vy *= stepMax / m; vz *= stepMax / m; }
+        P[3 * i] += vx; P[3 * i + 1] += vy; P[3 * i + 2] += vz;
+      }
+      // dogrulama: dmin'in altina inen parcalarin uclari eski yerine doner; dmin > 2 x adim oldugundan ip kendi icinden gecemez
+      lastDm = 1e9;
+      for (let it = 0; ; it++) {
+        const bad = violations(); if (!bad.size) break;
+        reverts++;
+        if (it >= 6) { P.set(Pold); break; }
+        for (const i of bad) for (let a = 0; a < 3; a++) P[3 * i + a] = Pold[3 * i + a];
+      }
+      let ke = 0; for (let i = 0; i < 3 * n; i++) ke += (P[i] - Pold[i]) ** 2;
+      energy = Math.sqrt(ke / n); steps++;
+      if (mode === "tight") {
+        const me = meanEdge();
+        L0 = Math.max(L0 * 0.99, TENS * me, SHRINK * L0i);          // ip gerilir ama kopacak kadar degil
+        if (steps % 300 === 0) { stall = me > 0.995 * best ? stall + 1 : 0; best = Math.min(best, me); }
+        if (me <= SHRINK * L0i * 1.05 || stall >= 2 || steps > 7000) { mode = "settle"; L0 = me; settleAt = steps; }
+        setRange();
+      } else calm = energy < 0.0006 ? calm + 1 : 0;   // yerlesme: uzunluk sabit, yalniz yakin itme
+      return true;
+    }
+    return { P, comps, step, get mode() { return mode; }, get done() { return mode === "settle" && (calm > 80 || steps - settleAt > 1500); }, get steps() { return steps; }, dmin, get stats() { return { reverts, lastDm, L0, L0i, kx, n, mode }; }, get energy() { return energy; } };
+  }
+
+  // ---------- sahne ----------
+  function dom() {
+    if ($("kv")) return;
+    const d = document.createElement("div"); d.id = "kv"; d.setAttribute("role", "dialog"); d.setAttribute("aria-modal", "true"); d.setAttribute("aria-label", "Düğüm görünümü");
+    d.innerHTML = `<div class="kvstage" id="kvstage"><div class="kvphase" id="kvphase"></div></div>
+<div class="kvside"><div class="big" id="kvbig"></div><p class="sub" id="kvsub"></p><div class="kvplat" id="kvplat"></div><p class="note" id="kvcap"></p><p class="note" id="kvnote"></p>
+<div class="row"><button class="b" id="kvreplay">Baştan oynat</button><button class="b" id="kvpause">Duraklat</button><button class="b primary" id="kvclose">Kapat</button></div></div>`;
+    document.body.appendChild(d);
+    $("kvclose").onclick = close; $("kvreplay").onclick = () => start();
+    $("kvpause").onclick = () => { paused = !paused; $("kvpause").textContent = paused ? "Devam" : "Duraklat"; };
+    addEventListener("keydown", e => { if (e.key === "Escape" && d.classList.contains("on")) close(); });
+  }
+  function initGL() {
+    if (ren) return;
+    ren = new THREE.WebGLRenderer({ antialias: true, alpha: true }); ren.setPixelRatio(Math.min(2, devicePixelRatio)); ren.outputEncoding = THREE.sRGBEncoding;
+    $("kvstage").prepend(ren.domElement);
+    scene = new THREE.Scene(); cam = new THREE.PerspectiveCamera(36, 1, 0.05, 400);
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x887766, 0.75));
+    const l1 = new THREE.DirectionalLight(0xffffff, 0.8); l1.position.set(-4, 10, 6); scene.add(l1);
+    const l2 = new THREE.DirectionalLight(0xffffff, 0.3); l2.position.set(6, 3, -5); scene.add(l2);
+    boardG = new THREE.Group(); tubeG = new THREE.Group(); scene.add(boardG, tubeG);
+    ctl = new THREE.OrbitControls(cam, ren.domElement); ctl.enableDamping = true; ctl.enablePan = false;
+    ren.domElement.addEventListener("pointerdown", () => { userHold = true; });
+    addEventListener("pointerup", () => { userHold = false; });
+    new ResizeObserver(size).observe($("kvstage"));
+  }
+  function size() { const s = $("kvstage"), w = s.clientWidth || 600, h = s.clientHeight || 400; ren.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); }
+  function boardTexture() {
+    const svg = $("svg"), vb = svg.viewBox.baseVal;
+    let s = svg.outerHTML.replace(/var\(--[a-z0-9]+\)/g, m => css(m));
+    const W = Math.round(Math.min(2048, vb.width * 72)), H = Math.round(W * vb.height / vb.width);
+    s = s.replace(/<svg[^>]*>/, `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb.x} ${vb.y} ${vb.width} ${vb.height}" width="${W}" height="${H}">`);
+    return new Promise(ok => {
+      const img = new Image(), url = URL.createObjectURL(new Blob([s], { type: "image/svg+xml" }));
+      img.onload = () => { const cv = document.createElement("canvas"); cv.width = W; cv.height = H; cv.getContext("2d").drawImage(img, 0, 0); URL.revokeObjectURL(url); const t = new THREE.CanvasTexture(cv); t.encoding = THREE.sRGBEncoding; ok({ t, vb }); };
+      img.onerror = () => ok(null); img.src = url;
+    });
+  }
+  function clear(g) { while (g.children.length) { const o = g.children.pop(); if (o.geometry) o.geometry.dispose(); if (o.material) { if (o.material.map) o.material.map.dispose(); o.material.dispose(); } } }
+  const mats = [];
+  function drawTubes(list) {
+    clear(tubeG);
+    list.forEach((pts, k) => {
+      const curve = new THREE.CatmullRomCurve3(pts.map(p => new THREE.Vector3(p[0], p[1], p[2])), true, "centripetal");
+      const g = new THREE.TubeGeometry(curve, pts.length * 2, 0.075, 10, true);
+      const m = new THREE.MeshStandardMaterial({ color: new THREE.Color(colors[k]).convertSRGBToLinear(), roughness: 0.42, metalness: 0.05 });
+      tubeG.add(new THREE.Mesh(g, m));
+    });
+  }
+  function fit(list, k) {
+    if (userHold) return;
+    let cx = 0, cy = 0, cz = 0, n = 0; for (const p of list) for (const v of p) { cx += v[0]; cy += v[1]; cz += v[2]; n++; }
+    cx /= n; cy /= n; cz /= n; let r = 0; for (const p of list) for (const v of p) r = Math.max(r, Math.hypot(v[0] - cx, v[1] - cy, v[2] - cz));
+    const target = new THREE.Vector3(cx, cy, cz);
+    const dist = (r + 0.3) / Math.sin(cam.fov * Math.PI / 360) / Math.min(1, cam.aspect) * 1.05;
+    ctl.target.lerp(target, k);
+    const dir = cam.position.clone().sub(ctl.target).normalize();
+    const want = ctl.target.clone().add(dir.multiplyScalar(dist));
+    cam.position.lerp(want, k);
+  }
+  const caption = t => { $("kvphase").textContent = t; };
+  async function start() {
+    cancelAnimationFrame(raf); const my = ++run; paused = false; $("kvpause").textContent = "Duraklat";
+    const I = G.info(), id = I.id, inv = I.inv;
+    const { paths: P0, N } = buildPaths();
+    colors = P0.map(p => css(["var(--red)", "var(--axis)", "#2a7de1", "#1a9e5b", "#9b51e0", "#e0a400"][p.comp % 6]));
+    const cx = (N + 1) / 2;
+    paths = P0.map(p => p.pts);
+    // sag panel
+    const [big, sub] = G.label(id), nm = nameOf(id);
+    $("kvbig").innerHTML = big; $("kvsub").innerHTML = (nm ? nm[0].toUpperCase() + nm.slice(1) + " · " : "") + sub;
+    const pic = tablePicture(id, colors.length > 1 ? colors : [colors[0], css("var(--axis)")]);
+    $("kvplat").innerHTML = pic;
+    $("kvcap").textContent = pic ? (id.kind === "ikikopru" ? `Tablodaki görünüm: dört iplikli örgünün kapanışı; kesikli kutular Conway C(${id.conway.join(",")}) gösterimindeki ${id.conway.length} kıvrım bölgesi.` : "Tablodaki görünüm.") : "";
+    $("kvnote").textContent = "Eğri tahtadan kalkıyor ve bir ip gibi geriliyor; gereksiz kıvrımlar açılıyor. İp hiçbir an kendi içinden geçmiyor: her adımda kolları arasında bir ip kalınlığı kalıyor, bu yüzden düğüm tipi baştan sona aynı. Diyagram zaten en az kesişimliyse geriliş kesişim sayısını azaltamaz; o zaman yandaki tablo görünümüne bak. Fareyle ya da parmakla döndürebilirsin.";
+    $("kvbig").parentElement.classList.remove("won");
+    // tahta
+    clear(boardG);
+    const tex = await boardTexture(); if (my !== run) return;
+    let vb = null, boardMat = null;
+    if (tex) {
+      vb = tex.vb;
+      boardMat = new THREE.MeshBasicMaterial({ map: tex.t, transparent: true, opacity: 1, depthWrite: false });
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(vb.width, vb.height), boardMat);
+      m.rotation.x = -Math.PI / 2; m.position.set(vb.x + vb.width / 2 - cx, 0, vb.y + vb.height / 2); boardG.add(m);
+    }
+    const Wb = vb ? vb.width : N + 2;
+    cam.position.set(0, Wb * 0.62, Wb * 0.72); ctl.target.set(0, 0, 0.4); ctl.update();
+    const at = (h, lift) => paths.map(p => p.map(v => [v[0] - cx, lift + 0.08 + v[2] * h, v[1]]));
+    phase = "flat"; t0 = performance.now(); sim = null; caption("Tahtadaki diyagram");
+    if (reduce) {               // hareket azaltilmis: sonucu dogrudan goster
+      sim = makeSim(at(0.35, 1.2)); if (boardMat) boardMat.opacity = 0; caption("Hesaplanıyor…");
+      const chunk = () => { if (my !== run) return; const tb = performance.now(); while (!sim.done && performance.now() - tb < 40) sim.step();
+        if (!sim.done) { setTimeout(chunk, 0); return; } const L = cur(); drawTubes(L); fit(L, 1); ctl.update(); finish(); ren.render(scene, cam); };
+      chunk(); return;
+    }
+    const tick = () => {
+      if (my !== run) return;
+      raf = requestAnimationFrame(tick);
+      const t = performance.now() - t0;
+      if (phase === "flat") { drawTubes(at(0.12, 0)); if (t > 900) { phase = "lift"; t0 = performance.now(); caption("1 · Eğri tahtadan kalkıyor"); } }
+      else if (phase === "lift") {
+        const k = Math.min(1, t / 1400), e = k * k * (3 - 2 * k);
+        const L = at(0.12 + 0.23 * e, 1.2 * e); drawTubes(L); if (boardMat) boardMat.opacity = 1 - 0.9 * e;
+        if (k >= 1) { phase = "relax"; t0 = performance.now(); sim = makeSim(L); caption("2 · İp geriliyor; gereksiz kıvrımlar kendi içinden geçmeden açılıyor"); ctl.autoRotate = true; ctl.autoRotateSpeed = 0.8; }
+      } else if ((phase === "relax" || phase === "done") && !paused && !sim.done) {
+        const tb = performance.now(); while (performance.now() - tb < 12 && !sim.done) sim.step();
+        const L = cur(); drawTubes(L); fit(L, 0.04);
+        if (boardMat) boardMat.opacity = Math.max(0, 0.1 * (1 - t / 2500));      // tahta tamamen silinir
+        if (phase === "relax" && (sim.done || t > 30000)) finish();
+      }
+      ctl.update(); ren.render(scene, cam);
+    };
+    tick();
+  }
+  function cur() { const out = []; for (const c of sim.comps) { const a = []; for (let k = 0; k < c.n; k++) { const i = 3 * (c.s + k); a.push([sim.P[i], sim.P[i + 1], sim.P[i + 2]]); } out.push(a); } return out; }
+  function finish() {
+    phase = "done"; ctl.autoRotate = true; ctl.autoRotateSpeed = 0.5;
+    const I = G.info(), [big] = G.label(I.id);
+    caption("3 · Sonuç: " + big.replace(/<sub>(\d+)<\/sub>/g, (m, d) => [...d].map(x => "₀₁₂₃₄₅₆₇₈₉"[x]).join("")).replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim());
+    $("kvbig").parentElement.classList.add("won");
+  }
+  function close() { run++; cancelAnimationFrame(raf); $("kv").classList.remove("on"); document.body.style.overflow = ""; const b = $("see"); if (b) b.focus(); }
+  async function open() {
+    const I = G.info(); if (!I.complete) return;
+    dom(); $("kv").classList.add("on"); document.body.style.overflow = "hidden"; caption("Yükleniyor…");
+    try { await ensure(); } catch (e) { caption("3B kitaplığı yüklenemedi: " + e.message); return; }
+    initGL(); size(); $("kvclose").focus(); start();
+  }
+  return { open, close, platSVG, _sim: () => sim, _init: () => lastInit };
 })();
 
 </script>
