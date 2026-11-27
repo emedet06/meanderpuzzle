@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Menderes düğüm yapbozu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* VOICE: atölye tezgâhı; sakin, kesin, matematikçinin oyuncağı
+   IDEA: masadaki 3B baskı yapboz: mavi parçalar, kırmızı menderes sırtı, beyaz anahtar taşları
+   PICTURE: yapboz tahtasının kendisi, ilk ekranın büyük kısmı; yanında düğüm kartı
+   COLOUR and TYPE: tezgâh grisi zemin, parça mavileri, sırt kırmızısı, siyah eksen; Sora başlık, Inter metin
+   LAYOUT: tahta solda geniş, kart sağda; 900px altında tahta, kart, denetimler alt alta */
+:root{color-scheme:light dark;
+ --bg:light-dark(#efede7,#12171a);--panel:light-dark(#ffffff,#1b2226);--ink:light-dark(#172026,#e7ecee);--mute:light-dark(#5b666c,#9aa7ad);
+ --line:light-dark(#d9d5cc,#2c363b);--red:#d8452b;--axis:light-dark(#1d1d1f,#e9e9ea);--strip:light-dark(#d4d0c7,#3a4449);
+ --tile:#fbfaf6;--tileink:#1d1d1f;--b0:#cfe3ea;--b1:#9cc3cf;--b2:#6fa6ba;--b3:#4f8aa1;--b4:#3d7891;--ok:#1a8f55;--warn:#b5651d}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Inter,system-ui,sans-serif;overflow-x:clip}
+h1,h2,.big{font-family:Sora,Inter,sans-serif;letter-spacing:-.01em}
+h1{font-size:clamp(26px,3.2vw,38px);line-height:1.05;margin:0;text-wrap:balance}
+header{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:end;justify-content:space-between;padding:22px max(4vw,14px) 10px}
+header p{margin:6px 0 0;color:var(--mute);max-width:62ch}
+.tabs{display:flex;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:4px}
+.tabs button{border:0;background:none;color:var(--ink);font:600 15px Inter;padding:9px 16px;border-radius:9px;min-height:40px;cursor:pointer}
+.tabs button[aria-selected=true]{background:var(--ink);color:var(--bg)}
+main{display:grid;grid-template-columns:minmax(0,1fr) 340px;grid-template-areas:"brd side" "ctl side";gap:16px;padding:0 max(4vw,14px) 28px;align-items:start}
+main>.board:first-child{grid-area:brd}main>aside{grid-area:side}main>.ctlbox{grid-area:ctl}
+@media(max-width:900px){main{grid-template-columns:minmax(0,1fr);grid-template-areas:"brd" "side" "ctl"}aside{position:static}}
+.board{background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+#banner{display:none;padding:10px 16px;border-bottom:1px solid var(--line);font-weight:600;gap:10px;align-items:center;flex-wrap:wrap}
+#banner.on{display:flex}#banner.won{background:color-mix(in srgb,var(--ok) 16%,transparent)}
+#banner .sp{flex:1}
+.scroller{overflow-x:auto;overscroll-behavior-x:contain;touch-action:pan-x pan-y}
+#svg{display:block;touch-action:pan-x;user-select:none;-webkit-user-select:none}
+#view3d{display:none;position:relative;height:clamp(300px,min(62vh,72vw),560px);touch-action:none}
+#view3d canvas{display:block;width:100%;height:100%}
+.status{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:8px 16px;border-top:1px solid var(--line);color:var(--mute);font-size:14px;min-height:42px}
+.status b{color:var(--ink);font-weight:600}
+.tray{display:flex;gap:10px;overflow-x:auto;padding:12px 16px;border-top:1px solid var(--line);align-items:stretch}
+.piece{flex:none;display:grid;justify-items:center;gap:2px;border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:8px 10px 6px;min-width:76px;cursor:grab;touch-action:pan-x;color:var(--ink);font:500 13px Inter}
+.piece svg{height:44px;width:auto;pointer-events:none}
+.piece[aria-pressed=true]{outline:3px solid var(--red);outline-offset:1px}
+.piece[disabled]{opacity:.35;cursor:not-allowed}
+.piece .n{color:var(--mute);font-size:12px}
+.ctl{display:grid;gap:10px;padding:12px 16px 16px;border-top:1px solid var(--line)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.row>.lab{font-size:13px;color:var(--mute);min-width:84px}
+button.b,select,input{font:500 15px Inter;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;min-height:44px;padding:0 14px;cursor:pointer}
+input{font-size:16px;font-family:ui-monospace,Menlo,monospace;width:11.5em;cursor:text}
+button.b:hover,select:hover{border-color:var(--mute)}
+button.b.primary{background:var(--red);border-color:var(--red);color:#fff;font-weight:600}
+button:focus-visible,select:focus-visible,input:focus-visible,.piece:focus-visible{outline:3px solid #2a7de1;outline-offset:2px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{border:0;background:var(--bg);color:var(--ink);font:500 15px Inter;min-height:44px;padding:0 14px;cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--ink);color:var(--bg)}
+aside{display:grid;gap:12px;position:sticky;top:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px}
+#ask{width:100%;min-height:52px;font-size:17px}
+.big{font-size:clamp(30px,4vw,44px);line-height:1.05;margin:12px 0 2px;overflow-wrap:anywhere}
+.sub{color:var(--mute);margin:0 0 12px}
+dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0}
+dt{color:var(--mute);font-size:14px}dd{margin:0;font-weight:600;text-align:right;font-variant-numeric:tabular-nums}
+.jones{margin-top:12px;padding-top:12px;border-top:1px solid var(--line);font-size:15px;overflow-wrap:anywhere;line-height:1.9}
+.jones sup{font-size:11px}
+.note{font-size:13px;color:var(--mute);margin:10px 0 0}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:13px;color:var(--mute);margin-top:10px}
+.legend i{display:inline-block;width:18px;height:5px;border-radius:3px;vertical-align:middle;margin-right:5px}
+.xr{display:none;gap:8px;flex-wrap:wrap}
+#xrmsg{font-size:14px;color:var(--mute);margin:0}
+#xrov{display:none;position:fixed;inset:0;pointer-events:none;flex-direction:column;justify-content:flex-end;background:transparent}
+#xbar{pointer-events:auto;display:flex;padding:12px 12px max(12px,env(safe-area-inset-bottom));gap:8px;flex-wrap:wrap;justify-content:center;background:rgba(10,14,16,.72);color:#fff;font:500 15px Inter,sans-serif}
+#xbar button{font:600 15px Inter,sans-serif;min-height:48px;padding:0 16px;border-radius:12px;border:0;background:#fff;color:#111}
+#xbar .t{width:100%;text-align:center}
+.foot{padding:0 max(4vw,14px) 30px;color:var(--mute);font-size:14px;max-width:900px}
+.foot h2{font-size:20px;color:var(--ink);margin:18px 0 6px}
+@keyframes pulse{0%{transform:scale(1)}40%{transform:scale(1.06)}100%{transform:scale(1)}}
+.won .big,#banner.won b{animation:pulse .7s ease}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Menderes düğüm yapbozu</h1>
+    <p>Parçaları eksenin iki yanına yerleştir, kesişimlerdeki taşları çevir; hangi düğümü ya da bağı kurduğunu tek tıkla gör.</p>
+  </div>
+  <div class="tabs" role="tablist">
+    <button role="tab" id="tab2" aria-selected="true">2B</button>
+    <button role="tab" id="tab3" aria-selected="false">3B · AR · VR</button>
+  </div>
+</header>
+<main>
+  <section class="board" aria-label="Yapboz tahtası">
+    <div id="banner"><b id="btext"></b><span class="sp"></span><button class="b" id="bgive">Çözümü göster</button><button class="b" id="bnew">Yeni hedef</button><button class="b" id="bend">Bitir</button></div>
+    <div class="scroller" id="scroller"><svg id="svg" role="application" aria-label="Menderes yapbozu"></svg></div>
+    <div id="view3d" aria-label="Üç boyutlu görünüm"></div>
+    <div class="status" id="status"></div>
+    <div class="tray" id="tray" aria-label="Parça kutusu"></div>
+  </section>
+  <aside>
+    <div class="card" id="card">
+      <button class="b primary" id="ask">Hangi düğüm?</button>
+      <div id="res"></div>
+    </div>
+  </aside>
+  <section class="board ctlbox" aria-label="Denetimler">
+    <div class="ctl" style="border-top:0">
+      <div class="row">
+        <span class="lab">Takım</span>
+        <select id="mode" aria-label="Parça takımı">
+          <option value="fiziksel">Basılı takım: 16 kesişim</option>
+          <option value="serbest">Serbest: parça sınırsız</option>
+        </select>
+        <select id="nsel" aria-label="Kesişim sayısı"></select>
+        <span id="wordbox" class="row">
+          <input id="word" aria-label="Menderes kelimesi" spellcheck="false" autocomplete="off">
+          <button class="b" id="wprev" aria-label="Önceki menderes">◀</button>
+          <button class="b" id="wnext" aria-label="Sonraki menderes">▶</button>
+        </span>
+        <select id="physw" aria-label="Basılı takımla kurulabilen menderesler"></select>
+        <button class="b" id="place">Kur</button>
+        <button class="b" id="rnd">Rastgele menderes</button>
+        <button class="b" id="clear">Dağıt</button>
+      </div>
+      <div class="row">
+        <span class="lab">Taşa dokununca</span>
+        <span class="seg" role="group" aria-label="Taş aracı"><button id="tflip" aria-pressed="true">Çevir</button><button id="tsmooth" aria-pressed="false">Düzleştir</button></span>
+        <button class="b" id="salt">Alterne</button>
+        <button class="b" id="sallv">Hep menderes üstte</button>
+        <button class="b" id="sknot">16'yı düzleştir</button>
+        <button class="b" id="srnd">Rastgele çevir</button>
+        <button class="b" id="undo">Geri al</button>
+        <button class="b" id="puz">Bulmaca</button>
+      </div>
+      <div class="xr" id="xr">
+        <button class="b primary" id="bar">Masada gör (AR)</button>
+        <button class="b" id="bvr">VR</button>
+        <button class="b" id="breset">Görünümü sıfırla</button>
+        <p id="xrmsg"></p>
+      </div>
+    </div>
+  </section>
+</main>
+<div class="foot">
+  <h2>Nasıl oynanır</h2>
+  <p>Kutudan bir parçayı tahtaya sürükle ya da önce parçaya, sonra tahtada istediğin yere dokun. Küçük parça (B) iki komşu noktayı, R<sub>r</sub> parçası 2r+2 noktayı kaplar; büyük parçaların çentiklerine küçük parçalar oturur. Yerleşmiş bir parçaya dokununca kalkar; başka yere dokununca taşınır, kutuya dokununca geri döner.</p>
+  <p>Eksenin iki ucu, kesikli çizgiyle gösterildiği gibi dışarıdan dolaşan bir yayla birleşmiş sayılır. Her taşın bir yüzünde menderes, öbür yüzünde eksen üstten geçer; “Düzleştir” aracıyla bir kesişim iki yoldan düzleştirilir. Ad ve Conway gösterimi, Jones polinomu ve determinant iki köprülü bağlarla karşılaştırılarak bulunur; ayna görüntüsüne kadar geçerlidir.</p>
+  <p>3B sekmesinde parmakla ya da fareyle döndür, iki parmakla yakınlaştır. Taşa dokununca çevrilir; parçaya dokunup masada başka bir yere dokununca taşınır. AR (Android Chrome) ve VR (Quest tarayıcısı) aynı sekmeden açılır; claude.ai içinde açıkken çerçeve kamera ve XR izni vermediği için bu düğmeler yalnız sayfanın bağımsız kopyası https adresinden açıldığında çalışır. AR'da telefonu masaya doğrult, beyaz halka görününce ekrana dokun: yapboz gerçek boyutunda (24 mm aralıklı) masaya konur.</p>
+</div>
+<div id="xrov"><div id="xbar"><div class="t" id="xrt"></div><button id="xalt">Alterne</button><button id="xask">Hangi düğüm?</button><button id="xmove">Yeniden yerleştir</button><button id="xend">Çık</button></div></div>
+<script>
+// Menderes dugum cekirdegi: ince menderesler, parca yerlesimi, Kauffman parantezi (kesit DP),
+// Jones polinomu, determinant, baglanma sayilari, iki kopru eslestirme ve Conway gosterimi.
+const Core = (() => {
+  // ---------- Laurent polinomlari: Map(us -> katsayi) ----------
+  const P = {
+    one: () => new Map([[0, 1]]),
+    add(a, b, k = 1) { const r = new Map(a); for (const [e, c] of b) { const v = (r.get(e) || 0) + k * c; v ? r.set(e, v) : r.delete(e); } return r; },
+    shift(a, s) { const r = new Map(); for (const [e, c] of a) r.set(e + s, c); return r; },
+    mul(a, b) { const r = new Map(); for (const [e1, c1] of a) for (const [e2, c2] of b) { const e = e1 + e2, v = (r.get(e) || 0) + c1 * c2; v ? r.set(e, v) : r.delete(e); } return r; },
+    bar(a) { const r = new Map(); for (const [e, c] of a) r.set(-e, c); return r; },
+    neg(a) { const r = new Map(); for (const [e, c] of a) r.set(e, -c); return r; },
+  };
+  const D = new Map([[2, -1], [-2, -1]]);           // d = -A^2 - A^-2
+  function divD(a) {                                // a / d (tam bolunur)
+    // d = -A^-2 (A^4 + 1); a / d = -A^2 * a / (A^4+1)
+    const es = [...a.keys()]; if (!es.length) return new Map();
+    const lo = Math.min(...es), hi = Math.max(...es);
+    const c = new Map(); for (let e = lo; e <= hi; e++) c.set(e, a.get(e) || 0);
+    const q = new Map();
+    for (let e = hi; e >= lo + 4; e--) { const v = c.get(e); if (!v) continue; q.set(e - 4, v); c.set(e - 4, c.get(e - 4) - v); c.set(e, 0); }
+    for (let e = lo; e < lo + 4; e++) if (Math.abs(c.get(e) || 0) > 0) throw new Error("d ile bolunmuyor");
+    const r = new Map(); for (const [e, v] of q) if (v) r.set(e + 2, -v);
+    return r;
+  }
+  function canon(a) {                               // birim (+-A^k) carpanina kadar
+    const es = [...a.keys()].sort((x, y) => x - y); if (!es.length) return "0";
+    const s = Math.sign(a.get(es[0]));
+    return es.map(e => `${e - es[0]}:${s * a.get(e)}`).join(",");
+  }
+  function evalAt(a, theta) {                       // A = e^{i theta}
+    let re = 0, im = 0; for (const [e, c] of a) { re += c * Math.cos(e * theta); im += c * Math.sin(e * theta); } return [re, im];
+  }
+
+  // ---------- ince menderes: kelime -> yaylar ----------
+  function arcsFromWord(eps) {
+    const n = eps.length + 1, N = 2 * n;
+    const side = sg => {
+      const h = new Array(N + 1).fill(0);
+      for (let g = 1; g < N; g++) h[g] = g % 2 ? 1 : (eps[g / 2 - 1] === sg ? 2 : 0);
+      const st = [], out = [];
+      for (let p = 1; p <= N; p++) { if (h[p] > h[p - 1]) st.push(p); else out.push([st.pop(), p]); }
+      return out;
+    };
+    return { N, up: side("+"), dn: side("-") };
+  }
+  // kelime -> parca yerlesimi (yan, baslangic, r)
+  function piecesFromArcs(arcs) {
+    const out = [];
+    for (const [list, side] of [[arcs.up, 1], [arcs.dn, -1]]) for (const [a, b] of list) out.push({ side, a, r: (b - a - 1) / 2 });
+    return out;
+  }
+  function arcsFromPieces(N, pieces) {
+    const up = [], dn = [];
+    for (const q of pieces) (q.side > 0 ? up : dn).push([q.a, q.a + 2 * q.r + 1]);
+    return { N, up, dn };
+  }
+  // bir yandaki yaylar fiziksel olarak sigar mi (tamamlanmis olmasi gerekmez)
+  function sideConflict(list) {
+    for (let i = 0; i < list.length; i++) for (let j = i + 1; j < list.length; j++) {
+      const [a, b] = list[i], [c, d] = list[j];
+      if (a === c || a === d || b === c || b === d) return "aynı noktada iki yay";
+      if (b < c || d < a) continue;
+      const [oa, ob, ia, ib] = (a < c) ? [a, b, c, d] : [c, d, a, b];
+      if (ib > ob) return "yaylar kesişiyor";
+      if (ib - ia !== 1) return "büyük parça başka bir büyük parçanın içine giremez";
+      if (ob - oa === 1) return "küçük parçanın içine parça girmez";
+      if ((ia - oa) % 2 !== 1) return "küçük parça çentiğe denk gelmiyor";
+    }
+    return null;
+  }
+  function completeness(arcs) {
+    const { N } = arcs, miss = { up: [], dn: [] };
+    for (const k of ["up", "dn"]) {
+      const used = new Array(N + 1).fill(false);
+      for (const [a, b] of arcs[k]) used[a] = used[b] = true;
+      for (let p = 1; p <= N; p++) if (!used[p]) miss[k].push(p);
+    }
+    return miss;
+  }
+  function curveCount(arcs) {                       // yaylarin olusturdugu kapali egri sayisi (tamamlanmis)
+    const { N } = arcs, U = {}, L = {};
+    for (const [a, b] of arcs.up) { U[a] = b; U[b] = a; }
+    for (const [a, b] of arcs.dn) { L[a] = b; L[b] = a; }
+    const seen = new Set(); let k = 0;
+    for (let s = 1; s <= N; s++) {
+      if (seen.has(s)) continue; k++;
+      let p = s;
+      do { seen.add(p); const q = U[p]; seen.add(q); p = L[q]; } while (p !== s);
+    }
+    return k;
+  }
+
+  // ---------- diyagram: yuvalar ve kenarlar ----------
+  // durumlar: 'v' menderes ustte, 'h' eksen ustte, 'NW' ve 'NE' duzlestirme
+  const PAIRS = { h: [["S", "E", "N", "W"], ["S", "W", "E", "N"]], v: [["W", "S", "E", "N"], ["W", "N", "S", "E"]] };
+  const SMOOTH = { NE: ["N", "E", "S", "W"], NW: ["N", "W", "S", "E"] };
+  const STRAIGHT = ["E", "W", "N", "S"];
+  const DIRV = { W: [1, 0], E: [-1, 0], S: [0, 1], N: [0, -1] };
+  function slots(arcs) {
+    const { N } = arcs, slot = {};
+    let id = N;
+    for (let p = 1; p <= N; p++) { slot[p + "E"] = p < N ? p : N; slot[p + "W"] = p > 1 ? p - 1 : N; }
+    for (const [a, b] of arcs.up) { id++; slot[a + "N"] = slot[b + "N"] = id; }
+    for (const [a, b] of arcs.dn) { id++; slot[a + "S"] = slot[b + "S"] = id; }
+    return { slot, nEdges: id };
+  }
+
+  function bracket(arcs, states) {
+    const { N } = arcs, { slot } = slots(arcs);
+    let layer = new Map([["", { st: new Map(), poly: P.one() }]]);
+    for (let p = 1; p <= N; p++) {
+      const s = states[p - 1];
+      const opts = s in SMOOTH ? [[SMOOTH[s], 0]] : [[PAIRS[s][0], 1], [PAIRS[s][1], -1]];
+      const next = new Map();
+      for (const { st, poly } of layer.values()) for (const [pr, w] of opts) {
+        const m = new Map(st); let loops = 0;
+        for (let i = 0; i < 4; i += 2) {
+          const e1 = slot[p + pr[i]], e2 = slot[p + pr[i + 1]];
+          const d1 = m.has(e1), d2 = m.has(e2);
+          if (!d1 && !d2) { m.set(e1, e2); m.set(e2, e1); }
+          else if (d1 && !d2) { const q = m.get(e1); m.delete(e1); m.set(q, e2); m.set(e2, q); }
+          else if (!d1 && d2) { const q = m.get(e2); m.delete(e2); m.set(q, e1); m.set(e1, q); }
+          else { const q1 = m.get(e1), q2 = m.get(e2); m.delete(e1); m.delete(e2); if (q1 === e2) loops++; else { m.set(q1, q2); m.set(q2, q1); } }
+        }
+        let np = P.shift(poly, w); for (let i = 0; i < loops; i++) np = P.mul(np, D);
+        const key = [...m.entries()].filter(([a, b]) => a < b).sort((x, y) => x[0] - y[0]).map(x => x.join("-")).join(",");
+        const cur = next.get(key);
+        if (cur) cur.poly = P.add(cur.poly, np); else next.set(key, { st: m, poly: np });
+      }
+      layer = next;
+    }
+    const fin = layer.get(""); return divD(fin.poly);
+  }
+
+  // yonlu dolasma: bilesenler, her kesisimde giris yuvalari ve bilesen numaralari, kenar -> bilesen
+  function traverse(arcs, states) {
+    const { N } = arcs, { slot } = slots(arcs);
+    const ends = {};
+    for (const k in slot) (ends[slot[k]] = ends[slot[k]] || []).push(k);
+    const through = (p, s) => {
+      const st = states[p - 1], pr = (st === "h" || st === "v") ? STRAIGHT : SMOOTH[st];
+      for (let i = 0; i < 4; i += 2) { if (pr[i] === s) return pr[i + 1]; if (pr[i + 1] === s) return pr[i]; }
+    };
+    const seen = new Set(), enter = {}, edgeComp = {};
+    let comps = 0;
+    const starts = [`1N`, `1E`, ...Object.keys(slot)];
+    for (const st0 of starts) {
+      if (seen.has(st0)) continue;
+      const c = comps++;
+      let p = parseInt(st0), s = st0.replace(/^\d+/, "");
+      while (!seen.has(p + s)) {
+        seen.add(p + s);
+        const e = slot[p + s]; edgeComp[e] = c;
+        const other = ends[e].find(x => x !== p + s);
+        seen.add(other);
+        const q = parseInt(other), t = other.replace(/^\d+/, "");
+        (enter[q] = enter[q] || []).push([t, c]);
+        p = q; s = through(q, t);
+      }
+    }
+    const sign = {}, pairComp = {};
+    for (let p = 1; p <= N; p++) {
+      const st = states[p - 1]; if (st !== "h" && st !== "v") continue;
+      const ins = enter[p];
+      const ax = ins.find(x => "EW".includes(x[0])), me = ins.find(x => "NS".includes(x[0]));
+      const [o, u] = st === "h" ? [DIRV[ax[0]], DIRV[me[0]]] : [DIRV[me[0]], DIRV[ax[0]]];
+      sign[p] = o[0] * u[1] - o[1] * u[0];
+      pairComp[p] = [ax[1], me[1]];
+    }
+    return { comps, sign, pairComp, edgeComp, slot };
+  }
+
+  function invariants(arcs, states) {
+    const br = bracket(arcs, states);
+    const tr = traverse(arcs, states);
+    const w = Object.values(tr.sign).reduce((a, b) => a + b, 0);
+    // V(t) = (-A^3)^-w <D>, A = t^(-1/4); us anahtari: t'nin ussunun 4 kati
+    const V = new Map();
+    for (const [e, c] of br) { const k = 3 * w - e; V.set(k, (V.get(k) || 0) + c * (w % 2 ? -1 : 1)); }
+    for (const [k, c] of [...V]) if (!c) V.delete(k);
+    const [re, im] = evalAt(br, Math.PI / 4);
+    const det = Math.round(Math.hypot(re, im));
+    const lk = {};
+    for (const p in tr.sign) { const [a, b] = tr.pairComp[p]; if (a !== b) { const k = Math.min(a, b) + "-" + Math.max(a, b); lk[k] = (lk[k] || 0) + tr.sign[p] / 2; } }
+    const es = [...br.keys()];
+    const span = es.length ? (Math.max(...es) - Math.min(...es)) / 4 : 0;
+    return { br, V, det, comps: tr.comps, lk, writhe: w, span, tr };
+  }
+
+  // ---------- iki kopru baglar ----------
+  const gcd = (a, b) => { while (b) [a, b] = [b, a % b]; return Math.abs(a); };
+  function cf(p, q) { const out = []; while (q) { out.push(Math.floor(p / q)); [p, q] = [q, p % q]; } return out; }
+  const inv = (q, p) => { for (let x = 1; x < p; x++) if ((q * x) % p === 1) return x; return 1; };
+  function rationalBracket(terms) {                 // N(T), F(T) = [t0; t1, ...]
+    const A = new Map([[1, 1]]), Ai = new Map([[-1, 1]]);
+    const addTwists = (f, g, n) => { for (let i = 0; i < n; i++) { const f2 = P.mul(Ai, f); const g2 = P.add(P.add(P.mul(A, f), P.mul(Ai, g)), P.mul(P.mul(A, D), g)); f = f2; g = g2; } return [f, g]; };
+    let f = P.one(), g = new Map();                 // [0]
+    [f, g] = addTwists(f, g, terms[terms.length - 1]);
+    for (let i = terms.length - 2; i >= 0; i--) { [f, g] = [P.bar(g), P.bar(f)]; [f, g] = addTwists(f, g, terms[i]); }
+    return P.add(P.mul(f, D), g);
+  }
+  function conwayOf(p, q) {
+    const cands = [q, inv(q, p), p - q, p - inv(q, p)].map(x => ((x % p) + p) % p).filter(x => x > 0).map(x => cf(p, x));
+    const ok = cands.filter(t => t[0] >= 2 || p <= 2);
+    const better = (a, b) => a.length !== b.length ? a.length < b.length : a.join(",").localeCompare(b.join(","), undefined, { numeric: true }) < 0;
+    let best = null; for (const t of (ok.length ? ok : cands)) if (!best || better(t, best)) best = t;
+    return best;
+  }
+  const NAMES = [["3_1", [3]], ["4_1", [2, 2]], ["5_1", [5]], ["5_2", [3, 2]], ["6_1", [4, 2]], ["6_2", [3, 1, 2]], ["6_3", [2, 1, 1, 2]],
+    ["7_1", [7]], ["7_2", [5, 2]], ["7_3", [4, 3]], ["7_4", [3, 1, 3]], ["7_5", [3, 2, 2]], ["7_6", [2, 2, 1, 2]], ["7_7", [2, 1, 1, 1, 2]]];
+  const fracOf = t => { let p = 1, q = 0; for (let i = t.length - 1; i >= 0; i--) [p, q] = [t[i] * p + q, p]; return [p, q]; };
+  const keyOf = (p, q) => p + "/" + Math.min(...[q, inv(q, p), p - q, p - inv(q, p)].map(x => ((x % p) + p) % p).filter(x => x > 0));
+  const NAME = {}; for (const [n, t] of NAMES) { const [p, q] = fracOf(t); NAME[keyOf(p, q)] = n; }
+
+  function bridgeMatch(br, det, comps, span) {      // iki kopru bag ara: once span (= 4 x kesisim sayisi) ile ele
+    const target = canon(br), mirror = canon(P.bar(br)), p = det, c = Math.round(span);
+    if (!p || (p % 2) !== (comps === 2 ? 0 : 1)) return null;
+    for (let q = 1; q < p; q++) {
+      if (gcd(p, q) !== 1) continue;
+      const t = cf(p, q);
+      if (t.reduce((a, b) => a + b, 0) !== c) continue;
+      const k = canon(rationalBracket(t));
+      if (k === target || k === mirror) return { p, q, conway: conwayOf(p, q), name: NAME[keyOf(p, q)] || null, crossings: c };
+    }
+    return null;
+  }
+  const BCACHE = new Map();
+  function bracketsOf(p, c) {                       // det p, c kesisimli butun iki kopru baglarin parantezleri
+    const ck = p + ":" + c; if (BCACHE.has(ck)) return BCACHE.get(ck);
+    const out = []; BCACHE.set(ck, out);
+    if (p === 1 && c === 0) return [{ br: P.one(), info: { p: 1, q: 1, conway: null, name: "0_1" } }];
+    for (let q = 1; q < p; q++) {
+      if (gcd(p, q) !== 1) continue;
+      const t = cf(p, q); if (t.reduce((a, b) => a + b, 0) !== c) continue;
+      out.push({ br: rationalBracket(t), info: { p, q, conway: conwayOf(p, q), name: NAME[keyOf(p, q)] || null } });
+    }
+    return out;
+  }
+  function sumMatch(br, det, comps, span) {         // iki iki-kopru parcanin baglantili toplami
+    const target = canon(br), c = Math.round(span);
+    if (det > 20000) return null;
+    for (let p1 = 2; p1 * p1 <= det; p1++) {
+      if (det % p1) continue;
+      const p2 = det / p1;
+      for (let c1 = 1; c1 < c; c1++) {
+        const L1 = bracketsOf(p1, c1); if (!L1.length) continue;
+        const L2 = bracketsOf(p2, c - c1); if (!L2.length) continue;
+        for (const x of L1) for (const y of L2) {
+          const cm = (x.info.p % 2 ? 1 : 2) + (y.info.p % 2 ? 1 : 2) - 1;
+          if (cm !== comps) continue;
+          for (const bx of [x.br, P.bar(x.br)]) for (const by of [y.br, P.bar(y.br)])
+            if (canon(P.mul(bx, by)) === target) return [x.info, y.info];
+        }
+      }
+    }
+    return null;
+  }
+  function identify(inv0) {
+    const { br, det, comps, span } = inv0;
+    if (comps > 2) return { kind: "cok", text: `${comps} bileşenli bağ` };
+    if (comps === 1 && canon(br) === "0:1") return { kind: "unknot" };
+    if (comps === 2 && canon(br) === canon(D)) return { kind: "unlink" };
+    if (comps === 2 && det === 0) {                 // ayrik bag: dugum + cember?
+      let qb = null; try { qb = divD(br); } catch (e) { }
+      if (qb) {
+        const es = [...qb.keys()], sp = (Math.max(...es) - Math.min(...es)) / 4;
+        const [re, im] = evalAt(qb, Math.PI / 4), d1 = Math.round(Math.hypot(re, im));
+        if (canon(qb) === "0:1") return { kind: "unlink" };
+        const m = bridgeMatch(qb, d1, 1, sp);
+        if (m) return { kind: "split", parts: [m] };
+        const s = sumMatch(qb, d1, 1, sp); if (s) return { kind: "split", parts: s, sum: true };
+      }
+      return { kind: "bilinmiyor" };
+    }
+    const m = bridgeMatch(br, det, comps, span);
+    if (m) return { kind: "ikikopru", ...m };
+    const s = sumMatch(br, det, comps, span);
+    if (s) return { kind: "toplam", parts: s };
+    return { kind: "bilinmiyor" };
+  }
+
+  // ---------- yardimcilar ----------
+  const altStates = N => Array.from({ length: N }, (_, i) => (i % 2 === 0 ? "v" : "h"));
+  function words(n) { const out = []; for (let m = 0; m < (1 << (n - 1)); m++) { let s = ""; for (let i = 0; i < n - 1; i++) s += (m >> (n - 2 - i)) & 1 ? "-" : "+"; out.push(s); } return out; }
+  function jonesText(V, half) {
+    const ks = [...V.keys()].sort((a, b) => a - b);
+    return ks.map((k, i) => ({ k, c: V.get(k), i }));
+  }
+  return { P, D, canon, arcsFromWord, piecesFromArcs, arcsFromPieces, sideConflict, completeness, curveCount, bracket, traverse, invariants, identify, rationalBracket, cf, conwayOf, altStates, words, jonesText, NAME, keyOf, fracOf, evalAt };
+})();
+if (typeof module !== "undefined") module.exports = Core;
+
+</script>
+<script>
+{
+const C = Core, $ = s => document.getElementById(s);
+const PERMS = [[1, 2, 4], [1, 4, 2], [2, 1, 4], [2, 4, 1], [4, 1, 2], [4, 2, 1]];
+const PHYS = { N: 16, stock: { 0: 13, 1: 1, 2: 1, 4: 1 }, words: PERMS.map(p => p.map((r, i) => (i % 2 ? "-" : "+").repeat(r)).join("")) };
+const COMP = ["var(--red)", "var(--axis)", "#2a7de1", "#1a9e5b", "#9b51e0", "#e0a400"];
+const FILL = ["var(--b0)", "var(--b1)", "var(--b2)", "var(--b3)", "var(--b4)"];
+const SW = 0.13, HW = 0.34, HH = 0.31, MINU = 40;
+const KEY = "menderes-dijital-v1";
+let S = { mode: "fiziksel", N: 16, pieces: [], states: [], tool: "flip", open: false, word: PHYS.words[0] };
+let armed = null, preview = null, msg = "", msgT = 0, hist = [], target = null, won = false;
+
+// ---------- durum ----------
+const clone = () => JSON.stringify({ mode: S.mode, N: S.N, pieces: S.pieces, states: S.states, word: S.word });
+function push() { hist.push(clone()); if (hist.length > 80) hist.shift(); }
+function restore(j) { Object.assign(S, JSON.parse(j)); }
+function save() { try { localStorage.setItem(KEY, JSON.stringify({ ...JSON.parse(clone()), tool: S.tool, open: S.open })); } catch (e) { } }
+function load() { try { const j = JSON.parse(localStorage.getItem(KEY)); if (j && j.N && Array.isArray(j.pieces)) { Object.assign(S, j); return true; } } catch (e) { } return false; }
+const stockOf = r => S.mode === "fiziksel" ? (PHYS.stock[r] || 0) : (2 * r + 2 <= S.N ? Infinity : 0);
+const used = r => S.pieces.filter(q => q.r === r).length;
+const arcsNow = () => C.arcsFromPieces(S.N, S.pieces);
+function setWord(w, keepStates) {
+  push();
+  const arcs = C.arcsFromWord(w);
+  if (arcs.N !== S.N) { S.N = arcs.N; S.states = C.altStates(S.N); }
+  S.pieces = C.piecesFromArcs(arcs).map(q => ({ ...q }));
+  S.word = w; if (!keepStates && S.states.length !== S.N) S.states = C.altStates(S.N);
+  armed = null; render();
+}
+function conflict(q, except) {
+  const L = q.r * 2 + 1;
+  if (q.a < 1 || q.a + L > S.N) return "tahtanın dışına taşıyor";
+  if (except == null && used(q.r) >= stockOf(q.r)) return "kutuda bu parçadan kalmadı";
+  const list = S.pieces.filter((x, i) => i !== except && x.side === q.side).map(x => [x.a, x.a + 2 * x.r + 1]);
+  list.push([q.a, q.a + L]);
+  return C.sideConflict(list);
+}
+function candidate(r, side, xu, except) {
+  const L = 2 * r + 1, a0 = Math.round(xu - L / 2);
+  const tries = [a0, a0 + (xu - L / 2 > a0 ? 1 : -1), a0 - (xu - L / 2 > a0 ? 1 : -1)];
+  for (const a of tries) { const q = { r, side, a }; if (!conflict(q, except)) return { ...q, ok: true }; }
+  const a = Math.max(1, Math.min(S.N - L, a0)); return { r, side, a, ok: false, why: conflict({ r, side, a }, except) };
+}
+function say(t) { msg = t; clearTimeout(msgT); msgT = setTimeout(() => { msg = ""; renderStatus(); }, 3200); renderStatus(); }
+
+// ---------- hesap (onbellekli) ----------
+let memoK = "", memo = null;
+function info() {
+  const k = S.N + "|" + JSON.stringify(S.pieces) + "|" + S.states.join("");
+  if (k === memoK) return memo;
+  const arcs = arcsNow(), miss = C.completeness(arcs);
+  const complete = !miss.up.length && !miss.dn.length;
+  let res = { arcs, miss, complete };
+  if (complete) {
+    res.curves = C.curveCount(arcs);
+    res.inv = C.invariants(arcs, S.states);
+    res.id = C.identify(res.inv);
+  }
+  memoK = k; memo = res; return res;
+}
+function idKey(id) {
+  if (!id) return "";
+  if (id.kind === "ikikopru") return "B" + C.keyOf(id.p, id.q);
+  if (id.kind === "toplam" || id.kind === "split") return id.kind + id.parts.map(x => x.p === 1 ? "0" : C.keyOf(x.p, x.q)).sort().join("+");
+  return id.kind;
+}
+const nm = n => n ? n.replace(/_(\d+)/, "<sub>$1</sub>") : "";
+const conw = t => t ? "C(" + t.join(",") + ")" : "";
+function label(id) {
+  if (!id) return ["—", ""];
+  const one = x => x.p === 1 ? "○" : (x.name ? nm(x.name) : conw(x.conway));
+  switch (id.kind) {
+    case "unknot": return ["Çözülmüş düğüm", "Tek bileşen; Jones polinomu 1"];
+    case "unlink": return ["Ayrık iki halka", "Çözülmüş bağ: iki çember birbirinden ayrılır"];
+    case "ikikopru": return [id.name ? nm(id.name) + " <small style='font-size:.55em'>" + conw(id.conway) + "</small>" : conw(id.conway), (id.p % 2 ? "İki köprülü düğüm" : "İki köprülü bağ") + " · p/q = " + C.fracOf(id.conway).join("/")];
+    case "toplam": return [id.parts.map(one).join(" # "), "İki köprülü iki parçanın bağlantılı toplamı"];
+    case "split": return [id.parts.map(one).join(" # ") + " ⊔ ○", "Ayrık bağ: bir düğüm ve ondan ayrılabilen bir çember"];
+    case "cok": return [id.text, "İki köprülü bağlar en çok iki bileşenlidir; değişmezler aşağıda"];
+    default: return ["Tanınmadı", "İki köprülü değil, iki iki-köprülünün toplamı da değil"];
+  }
+}
+function jonesHTML(V) {
+  const ks = [...V.keys()].sort((a, b) => a - b);
+  if (!ks.length) return "0";
+  return ks.map((k, i) => {
+    const c = V.get(k), s = c < 0 ? "−" : (i ? "+" : ""), a = Math.abs(c);
+    const e = k / 4, es = Number.isInteger(e) ? String(e).replace("-", "−") : ((k < 0 ? "−" : "") + Math.abs(k / 2) + "/2");
+    const tt = k === 0 ? "" : (e === 1 ? "t" : `t<sup>${es}</sup>`);
+    return `${i ? " " : ""}${s}${i && s ? " " : ""}${(a !== 1 || !tt) ? a : ""}${tt}`;
+  }).join("");
+}
+
+// ---------- 2B cizim ----------
+const svg = $("svg"), scroller = $("scroller");
+let top = 2, bot = 2, U = 40;
+function arcPath(x0, x1, side) { const r = Math.abs(x1 - x0) / 2; return `M${x0} 0A${r} ${r} 0 0 ${side > 0 ? 1 : 0} ${x1} 0`; }
+function pieceShape(q, cls, extra = "") {
+  const R = q.r + 0.5 + 0.07, cx = q.a + q.r + 0.5;
+  let d = `M${-R} 0`;
+  for (let j = 1; j <= q.r; j++) { const xj = 2 * j - q.r - 1, n = 0.59; d += `L${xj - n} 0A${n} ${n} 0 0 1 ${xj + n} 0`; }
+  d += `L${R} 0A${R} ${R} 0 0 0 ${-R} 0Z`;
+  return `<path class="${cls}" d="${d}" transform="translate(${cx} 0) scale(1 ${q.side > 0 ? 1 : -1})" ${extra}/>`;
+}
+function tileOps(p, st, at, col) {
+  // at: {up:{c,rho}|null, dn:{...}}; donus: [{d, c, w}] (mutlak koordinat, x = p civari)
+  const yEnd = arc => arc ? arc.c + (p - arc.c) / arc.rho * Math.sqrt(arc.rho * arc.rho - HH * HH) : p;
+  const half = (arc, sg) => {
+    const xe = yEnd(arc);
+    if (!arc) return `M${p} 0L${p} ${sg * HH}`;
+    const right = arc.c > p, sweep = sg < 0 ? (right ? 1 : 0) : (right ? 0 : 1);
+    return `M${p} 0A${arc.rho} ${arc.rho} 0 0 ${sweep} ${xe} ${sg * HH}`;
+  };
+  const ops = [];
+  const vert = half(at.up, -1) + half(at.dn, 1), hor = `M${p - HW} 0L${p + HW} 0`;
+  if (st === "v" || st === "h") {
+    const [under, uc, over, oc] = st === "v" ? [hor, col.h, vert, col.v] : [vert, col.v, hor, col.h];
+    const halo = st === "v" ? `M${p} -0.2L${p} 0.2` : `M${p - 0.2} 0L${p + 0.2} 0`;
+    ops.push({ d: under, c: uc, w: SW }, { d: halo, c: "var(--tile)", w: SW + 0.14 }, { d: over, c: oc, w: SW });
+  } else {
+    const xt = yEnd(at.up), xb = yEnd(at.dn), k = 0.17;
+    const T = [xt, -HH], B = [xb, HH], W = [p - HW, 0], E = [p + HW, 0];
+    const dT = [(p - xt), HH], dB = [(p - xb), -HH], nT = Math.hypot(...dT), nB = Math.hypot(...dB);
+    const curve = (P0, d0, n0, P3, sx) => `M${P0[0]} ${P0[1]}C${P0[0] + d0[0] / n0 * k} ${P0[1] + d0[1] / n0 * k} ${P3[0] + sx * k} 0 ${P3[0]} 0`;
+    if (st === "NW") ops.push({ d: curve(T, dT, nT, W, 1), c: col.nw, w: SW }, { d: curve(B, dB, nB, E, -1), c: col.se, w: SW });
+    else ops.push({ d: curve(T, dT, nT, E, -1), c: col.nw, w: SW }, { d: curve(B, dB, nB, W, 1), c: col.se, w: SW });
+  }
+  return ops;
+}
+const STN = { v: "menderes üstte", h: "eksen üstte", NW: "düzleştirilmiş (kuzey-batı)", NE: "düzleştirilmiş (kuzey-doğu)" };
+function tileSVG(p, st, at, col) {
+  let g = `<rect x="${p - HW}" y="${-HH}" width="${2 * HW}" height="${2 * HH}" rx="0.06" fill="var(--tile)" stroke="#00000022" stroke-width="0.015"/>`;
+  for (const o of tileOps(p, st, at, col)) g += `<path d="${o.d}" fill="none" stroke="${o.c}" stroke-width="${o.w}"/>`;
+  return `<g data-p="${p}" role="button" tabindex="0" aria-label="${p}. kesişim: ${STN[st]}" style="cursor:pointer"><rect x="${p - 0.5}" y="-0.42" width="1" height="0.84" fill="transparent"/>${g}</g>`;
+}
+// cizim icin ortak geometri ve renkler (2B ve 3B)
+function scene() {
+  const I = info(), N = S.N, showC = S.open && I.complete, tr = showC ? I.inv.tr : null;
+  const ec = e => COMP[tr.edgeComp[e] % COMP.length];
+  const slot = tr ? tr.slot : null;
+  const U2 = {}, D2 = {};
+  for (const [a, b] of I.arcs.up) { const c = (a + b) / 2, rho = (b - a) / 2; U2[a] = U2[b] = { c, rho }; }
+  for (const [a, b] of I.arcs.dn) { const c = (a + b) / 2, rho = (b - a) / 2; D2[a] = D2[b] = { c, rho }; }
+  const arcCol = q => tr ? ec(slot[q.a + (q.side > 0 ? "N" : "S")]) : "var(--red)";
+  const axCol = e => tr ? ec(e) : "var(--axis)";
+  const tileCol = p => tr ? { v: ec(slot[p + "N"]), h: ec(slot[p + "E"]), nw: ec(slot[p + "N"]), se: ec(slot[p + "S"]) } : { v: "var(--red)", h: "var(--axis)", nw: "var(--red)", se: "var(--red)" };
+  return { I, N, U2, D2, arcCol, axCol, tileCol, at: p => ({ up: U2[p], dn: D2[p] }) };
+}
+function draw() {
+  const G = scene(), N = S.N;
+  const hold = (press && press.drag) ? press.r : (armed ? armed.r : -1);
+  const rad = side => Math.max(1.0, ...S.pieces.filter(q => q.side === side).map(q => q.r + 0.57), hold + 0.57);
+  top = rad(1) + 0.3; bot = rad(-1) + 0.3 + 0.8;
+  const W = Math.max(scroller.clientWidth || 600, (N + 1.6) * MINU); U = W / (N + 1.6);
+  svg.setAttribute("viewBox", `-0.3 ${-top} ${N + 1.6} ${top + bot}`);
+  svg.setAttribute("width", W); svg.setAttribute("height", U * (top + bot));
+  let out = "";
+  const Yc = bot - 0.35;
+  out += `<path d="M0.45 0C-0.25 0 -0.25 ${Yc} 1 ${Yc}L${N} ${Yc}C${N + 1.25} ${Yc} ${N + 1.25} 0 ${N + 0.55} 0" fill="none" stroke="${G.axCol(N)}" stroke-width="0.07" stroke-dasharray="0.22 0.16" opacity=".75"/>`;
+  let ridges = "";
+  S.pieces.forEach((q, i) => {
+    const op = armed && armed.from === i ? 0.35 : 1;
+    out += `<g data-i="${i}" style="cursor:grab" opacity="${op}">${pieceShape(q, "", `fill="${FILL[Math.min(q.r, 4)]}" stroke="#00000030" stroke-width="0.02"`)}</g>`;
+    ridges += `<path data-i="${i}" d="${arcPath(q.a, q.a + 2 * q.r + 1, q.side)}" fill="none" stroke="${G.arcCol(q)}" stroke-width="${SW}" opacity="${op}" style="cursor:grab"/>`;
+  });
+  if (preview) out += pieceShape(preview, "", `fill="${preview.ok ? "#1a8f5533" : "#d8452b33"}" stroke="${preview.ok ? "var(--ok)" : "var(--red)"}" stroke-width="0.04" stroke-dasharray="0.12 0.08" pointer-events="none"`);
+  out += `<rect x="0.45" y="-0.34" width="${N + 0.1}" height="0.68" rx="0.12" fill="var(--strip)"/>`;
+  out += `<path d="M0.45 0L${1 - HW} 0M${N + HW} 0L${N + 0.55} 0" stroke="${G.axCol(N)}" stroke-width="${SW}"/>`;
+  for (let p = 1; p < N; p++) out += `<path d="M${p + HW} 0L${p + 1 - HW} 0" stroke="${G.axCol(p)}" stroke-width="${SW}"/>`;
+  out += ridges;
+  for (let p = 1; p <= N; p++) out += tileSVG(p, S.states[p - 1], G.at(p), G.tileCol(p));
+  svg.innerHTML = out;
+}
+function trayIcon(r) {
+  const R = r + 0.57, w = 2 * R + 0.2, h = R + 0.15;
+  return `<svg viewBox="${-R - 0.1} ${-h + 0.05} ${w} ${h}" style="height:${r ? 44 : 30}px">${pieceShape({ r, a: -r - 0.5, side: 1 }, "", `fill="${FILL[Math.min(r, 4)]}" stroke="#00000030" stroke-width="0.03"`)}<path d="${arcPath(-r - 0.5, r + 0.5, 1)}" fill="none" stroke="var(--red)" stroke-width="${SW * 1.4}"/></svg>`;
+}
+function renderTray() {
+  const rs = S.mode === "fiziksel" ? [0, 1, 2, 4] : Array.from({ length: S.N / 2 }, (_, r) => r);
+  $("tray").innerHTML = rs.map(r => {
+    const left = stockOf(r) - used(r);
+    const nmr = r ? `R${r}` : "Küçük B";
+    return `<button class="piece" data-r="${r}" aria-pressed="${!!(armed && armed.from == null && armed.r === r)}" ${left > 0 ? "" : "disabled"} aria-label="${nmr}, kalan ${left === Infinity ? "sınırsız" : left}">${trayIcon(r)}<span>${nmr}</span><span class="n">${left === Infinity ? "sınırsız" : "×" + left}</span></button>`;
+  }).join("");
+}
+function renderStatus() {
+  const I = info();
+  let t;
+  if (msg) t = `<b>${msg}</b>`;
+  else if (armed) t = `<b>${armed.r ? "R" + armed.r : "Küçük parça"} elinde.</b> Tahtada bir yere dokun; kutuya dokunursan geri döner.`;
+  else if (!I.complete) { const m = I.miss.up.length + I.miss.dn.length; t = `Eksik: üstte ${I.miss.up.length}, altta ${I.miss.dn.length} nokta boşta${m === 2 * S.N ? ". Kutudan parça sürükle ya da “Kur”a bas" : ""}.`; }
+  else t = I.curves === 1 ? `<b>Menderes tamam:</b> tek kapalı eğri, ${S.N} kesişim.` : `<b>${I.curves} ayrı eğri:</b> bu bir menderes değil, ama bağ yine hesaplanır.`;
+  $("status").innerHTML = t;
+}
+function renderCard() {
+  const I = info(), res = $("res");
+  $("ask").textContent = S.open ? "Gizle" : "Hangi düğüm?";
+  $("ask").classList.toggle("primary", !S.open);
+  if (!S.open) { res.innerHTML = `<p class="note">Kartı açınca her değişiklikte güncellenir; tahtada bileşenler ayrı renklerle görünür.</p>`; return; }
+  if (!I.complete) { res.innerHTML = `<div class="big">—</div><p class="sub">Önce her noktaya üstten ve alttan birer yay gelsin.</p>`; return; }
+  const v = I.inv, id = I.id, [big, sub] = label(id);
+  const sm = S.states.filter(s => s === "NW" || s === "NE").length;
+  let rows = `<dt>Bileşen</dt><dd>${v.comps}</dd><dt>Determinant</dt><dd>${v.det}</dd>`;
+  const lk = Object.entries(v.lk);
+  if (lk.length === 1) rows += `<dt>Bağlanma sayısı</dt><dd>${String(lk[0][1]).replace("-", "−")}</dd>`;
+  else if (lk.length > 1) rows += `<dt>Bağlanma sayıları</dt><dd>${lk.map(([k, x]) => k.split("-").map(n => +n + 1).join("–") + ": " + String(x).replace("-", "−")).join(", ")}</dd>`;
+  rows += `<dt>Diyagramda kesişim</dt><dd>${S.N - sm}</dd>`;
+  const minc = id.kind === "ikikopru" ? id.crossings : (id.parts ? id.parts.reduce((a, x) => a + (x.conway ? x.conway.reduce((s, y) => s + y, 0) : 0), 0) : null);
+  if (minc != null && id.kind !== "unknot") rows += `<dt>En az kesişim</dt><dd>${minc}</dd>`;
+  const legend = v.comps > 1 ? `<div class="legend">${Array.from({ length: v.comps }, (_, i) => `<span><i style="background:${COMP[i % COMP.length]}"></i>${i + 1}. bileşen</span>`).join("")}</div>` : "";
+  res.innerHTML = `<div class="big">${big}</div><p class="sub">${sub}</p><dl>${rows}</dl><div class="jones">V(t) = ${jonesHTML(v.V)}</div>${legend}<p class="note">Ad ve Conway gösterimi Jones polinomu ve determinant iki köprülü bağlarla karşılaştırılarak bulunur; ayna görüntüsüne kadar geçerlidir.</p>`;
+}
+function renderBanner() {
+  const b = $("banner");
+  if (!target) { b.classList.remove("on", "won"); return; }
+  const I = info(); won = I.complete && idKey(I.id) === target.key;
+  b.classList.add("on"); b.classList.toggle("won", won);
+  $("btext").innerHTML = won ? `Buldun! ${target.label}` : `Hedef: ${target.label}`;
+}
+function renderControls() {
+  $("mode").value = S.mode;
+  const fz = S.mode === "fiziksel";
+  $("nsel").style.display = fz ? "none" : ""; $("wordbox").style.display = fz ? "none" : "";
+  $("physw").style.display = fz ? "" : "none";
+  $("nsel").value = S.N; if (fz && PHYS.words.includes(S.word)) $("physw").value = S.word;
+  if (!fz && document.activeElement !== $("word")) $("word").value = S.word && S.word.length === S.N / 2 - 1 ? S.word : "";
+  $("tflip").setAttribute("aria-pressed", S.tool === "flip"); $("tsmooth").setAttribute("aria-pressed", S.tool === "smooth");
+  $("undo").disabled = !hist.length;
+  $("sknot").textContent = S.N + ". kesişimi düzleştir";
+}
+function render() {
+  if (S.states.length !== S.N) S.states = C.altStates(S.N);
+  draw(); renderTray(); renderStatus(); renderCard(); renderBanner(); renderControls(); save();
+  if (window.View3D && View3D.active) View3D.update();
+}
+
+// ---------- isaretci ----------
+const toBoard = (cx, cy) => { const pt = svg.createSVGPoint(); pt.x = cx; pt.y = cy; return pt.matrixTransform(svg.getScreenCTM().inverse()); };
+const overBoard = (cx, cy) => { const r = scroller.getBoundingClientRect(); return cx >= r.left && cx <= r.right && cy >= r.top && cy <= r.bottom; };
+let press = null, ghost = null;
+function ghostShow(r, cx, cy, side) {
+  if (!ghost) { ghost = document.createElement("div"); ghost.style.cssText = "position:fixed;left:0;top:0;pointer-events:none;z-index:50;opacity:.85"; document.body.appendChild(ghost); }
+  const R = r + 0.57, w = (2 * R) * U, h = R * U;
+  ghost.innerHTML = `<svg width="${w}" height="${h}" viewBox="${-R} ${side > 0 ? -R : 0} ${2 * R} ${R}">${pieceShape({ r, a: -r - 0.5, side }, "", `fill="${FILL[Math.min(r, 4)]}" stroke="#0004" stroke-width="0.03"`)}</svg>`;
+  ghost.style.transform = `translate(${cx - w / 2}px, ${side > 0 ? cy - h : cy}px)`;
+}
+function ghostHide() { if (ghost) { ghost.remove(); ghost = null; } }
+function startPress(e, kind, val) {
+  press = { kind, val, x: e.clientX, y: e.clientY, drag: false, id: e.pointerId };
+}
+svg.addEventListener("pointerdown", e => {
+  const t = e.target.closest("[data-p],[data-i]");
+  if (t && t.dataset.p) startPress(e, "tile", +t.dataset.p);
+  else if (t && t.dataset.i) startPress(e, "piece", +t.dataset.i);
+  else startPress(e, "board");
+});
+$("tray").addEventListener("pointerdown", e => { const t = e.target.closest("[data-r]"); if (t && !t.disabled) { startPress(e, "tray", +t.dataset.r); e.preventDefault(); } });
+window.addEventListener("pointermove", e => {
+  if (!press || e.pointerId !== press.id) return;
+  if (!press.drag && Math.hypot(e.clientX - press.x, e.clientY - press.y) > 7 && (press.kind === "piece" || press.kind === "tray")) {
+    press.drag = true; armed = null;
+    press.r = press.kind === "tray" ? press.val : S.pieces[press.val].r;
+    press.from = press.kind === "piece" ? press.val : null;
+  }
+  if (!press.drag) return;
+  e.preventDefault();
+  const b = toBoard(e.clientX, e.clientY), side = b.y < 0 ? 1 : -1;
+  if (overBoard(e.clientX, e.clientY)) { preview = candidate(press.r, side, b.x, press.from); }
+  else preview = null;
+  ghostShow(press.r, e.clientX, e.clientY, side);
+  draw();
+}, { passive: false });
+window.addEventListener("pointerup", e => {
+  if (!press || e.pointerId !== press.id) return;
+  const p = press; press = null;
+  if (p.drag) {
+    ghostHide();
+    const pv = preview; preview = null;
+    if (pv && pv.ok) { push(); if (p.from != null) Object.assign(S.pieces[p.from], { side: pv.side, a: pv.a }); else S.pieces.push({ r: pv.r, side: pv.side, a: pv.a }); }
+    else if (!overBoard(e.clientX, e.clientY) && p.from != null) { push(); S.pieces.splice(p.from, 1); say("Parça kutuya döndü."); }
+    else if (pv) say("Buraya sığmıyor: " + pv.why + ".");
+    render(); return;
+  }
+  tap(p, e);
+});
+window.addEventListener("pointercancel", () => { press = null; preview = null; ghostHide(); draw(); });
+function tileAct(p) {
+  push();
+  const st = S.states[p - 1];
+  if (S.tool === "flip") S.states[p - 1] = st === "v" ? "h" : "v";
+  else S.states[p - 1] = st === "NW" ? "NE" : st === "NE" ? "v" : "NW";
+  render();
+  if (window.View3D && View3D.active) View3D.flash(p);
+}
+function tap(p, e) {
+  if (p.kind === "tray") {
+    if (armed && armed.from != null) { push(); S.pieces.splice(armed.from, 1); armed = null; say("Parça kutuya döndü."); render(); return; }
+    armed = armed && armed.r === p.val && armed.from == null ? null : { r: p.val, from: null }; render(); return;
+  }
+  if (p.kind === "tile" && !armed) { tileAct(p.val); return; }
+  if (p.kind === "piece" && (!armed || armed.from === p.val)) { armed = armed ? null : { r: S.pieces[p.val].r, from: p.val }; render(); return; }
+  if (armed) {
+    const b = toBoard(e.clientX, e.clientY), side = b.y < 0 ? 1 : -1;
+    const c = candidate(armed.r, side, b.x, armed.from);
+    if (!c.ok) { say("Buraya sığmıyor: " + c.why + "."); return; }
+    push();
+    if (armed.from != null) Object.assign(S.pieces[armed.from], { side: c.side, a: c.a }); else S.pieces.push({ r: c.r, side: c.side, a: c.a });
+    armed = null; render();
+  }
+}
+svg.addEventListener("keydown", e => { const t = e.target.closest("[data-p]"); if (t && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); tileAct(+t.dataset.p); } });
+
+// ---------- dugmeler ----------
+function fillN() { $("nsel").innerHTML = Array.from({ length: 11 }, (_, i) => 2 * (i + 2)).map(n => `<option value="${n}">${n} kesişim</option>`).join(""); }
+$("physw").innerHTML = PHYS.words.map((w, i) => `<option value="${w}">ε = ${w}</option>`).join("");
+$("mode").onchange = () => {
+  push(); S.mode = $("mode").value; armed = null;
+  if (S.mode === "fiziksel") { S.N = 16; S.states = C.altStates(16); setWord(PHYS.words[0]); }
+  else render();
+};
+$("nsel").onchange = () => { push(); S.N = +$("nsel").value; S.pieces = []; S.states = C.altStates(S.N); S.word = ""; armed = null; render(); };
+$("physw").onchange = () => setWord($("physw").value, true);
+$("place").onclick = () => {
+  if (S.mode === "fiziksel") return setWord($("physw").value, true);
+  const w = $("word").value.trim().replace(/[−–]/g, "-");
+  if (!/^[+-]+$/.test(w) || w.length > 11) return say("Kelime yalnız + ve − işaretlerinden oluşmalı, en çok 11 harf.");
+  setWord(w, w.length === S.N / 2 - 1);
+};
+$("word").addEventListener("keydown", e => { if (e.key === "Enter") $("place").click(); });
+const stepWord = d => {
+  const n = S.N / 2, all = C.words(n); let i = all.indexOf(S.word); i = (i + d + all.length) % all.length; setWord(all[i], true);
+};
+$("wprev").onclick = () => stepWord(-1); $("wnext").onclick = () => stepWord(1);
+$("rnd").onclick = () => { if (S.mode === "fiziksel") setWord(PHYS.words[Math.random() * 6 | 0], true); else { const all = C.words(S.N / 2); setWord(all[Math.random() * all.length | 0], true); } };
+$("clear").onclick = () => { push(); S.pieces = []; armed = null; render(); };
+$("tflip").onclick = () => { S.tool = "flip"; render(); };
+$("tsmooth").onclick = () => { S.tool = "smooth"; render(); };
+$("salt").onclick = () => { push(); S.states = C.altStates(S.N); render(); };
+$("sallv").onclick = () => { push(); S.states = Array(S.N).fill("v"); render(); };
+$("sknot").onclick = () => { push(); S.states = C.altStates(S.N); S.states[S.N - 1] = "NW"; render(); };
+$("srnd").onclick = () => { push(); S.states = S.states.map(s => (s === "NW" || s === "NE") ? s : "vh"[Math.random() * 2 | 0]); render(); };
+$("undo").onclick = () => { if (hist.length) { restore(hist.pop()); armed = null; render(); } };
+$("ask").onclick = () => { S.open = !S.open; render(); };
+// bulmaca
+function makeTarget() {
+  for (let t = 0; t < 60; t++) {
+    const w = S.mode === "fiziksel" ? PHYS.words[Math.random() * 6 | 0] : (() => { const a = C.words(S.N / 2); return a[Math.random() * a.length | 0]; })();
+    const arcs = C.arcsFromWord(w), N = arcs.N, st = C.altStates(N);
+    if (Math.random() < 0.6) st[Math.random() * N | 0] = Math.random() < 0.5 ? "NW" : "NE";
+    for (let k = Math.random() * 3 | 0; k > 0; k--) { const p = Math.random() * N | 0; if (st[p] === "v" || st[p] === "h") st[p] = st[p] === "v" ? "h" : "v"; }
+    const inv = C.invariants(arcs, st), id = C.identify(inv);
+    if (!["ikikopru", "toplam", "split"].includes(id.kind)) continue;
+    if (t < 40 && id.kind === "ikikopru" && id.crossings < 3) continue;
+    const [big] = label(id);
+    return { key: idKey(id), label: `${big} · ${inv.comps === 1 ? "düğüm" : inv.comps + " bileşenli bağ"} · det ${inv.det}`, word: w, st };
+  }
+  return null;
+}
+$("puz").onclick = () => { target = makeTarget(); if (target) { push(); S.pieces = []; armed = null; } render(); };
+$("bnew").onclick = () => { target = makeTarget(); push(); S.pieces = []; render(); };
+$("bend").onclick = () => { target = null; render(); };
+$("bgive").onclick = () => { if (!target) return; const t = target; setWord(t.word, true); S.states = t.st.slice(); render(); };
+// 3B sekmesi
+$("tab2").onclick = () => setTab(2); $("tab3").onclick = () => setTab(3);
+function setTab(k) {
+  $("tab2").setAttribute("aria-selected", k === 2); $("tab3").setAttribute("aria-selected", k === 3);
+  scroller.style.display = k === 2 ? "" : "none"; $("view3d").style.display = k === 3 ? "block" : "none"; $("xr").style.display = k === 3 ? "flex" : "none";
+  if (k === 3) window.View3D && View3D.show(); else window.View3D && View3D.hide();
+  render();
+}
+new ResizeObserver(() => draw()).observe(scroller);
+
+// ---------- 3B icin arayuz ----------
+window.Game = {
+  S, info, render, tileAct, candidate, conflict, push, label, idKey, scene, tileOps, COMP, FILL, HW, HH, SW,
+  pick(i) { armed = { r: S.pieces[i].r, from: i }; render(); },
+  get armed() { return armed; }, set armed(v) { armed = v; },
+  dropAt(xu, side) {
+    if (!armed) return false;
+    const c = candidate(armed.r, side, xu, armed.from);
+    if (!c.ok) { say("Buraya sığmıyor: " + c.why + "."); return false; }
+    push(); if (armed.from != null) Object.assign(S.pieces[armed.from], { side: c.side, a: c.a }); else S.pieces.push({ r: c.r, side: c.side, a: c.a });
+    armed = null; render(); return true;
+  },
+  setPreview(xu, side) { preview = armed ? candidate(armed.r, side, xu, armed.from) : null; return preview; },
+  clearPreview() { preview = null; },
+  get preview() { return preview; },
+  alt() { $("salt").click(); }, ask() { $("ask").click(); }, say,
+};
+
+fillN();
+if (!load()) { S.states = C.altStates(16); setWord(PHYS.words[0], true); hist = []; }
+render();
+}
+
+</script>
+<script>
+window.View3D = (() => {
+  const G = window.Game, $ = s => document.getElementById(s);
+  const LIB = "https://cdn.jsdelivr.net/npm/three@0.147.0/";
+  const UNIT = 0.024;                                // 1 birim = 24 mm (basili yapboz)
+  const T = 4 / 24, SF = 1.2 / 24, TT = 5.2 / 24, SH = 4 / 24, RH = 6.4 / 24, TRIM = 0.36, RW = 3.2 / 24;
+  const HEX = { "var(--red)": "#d8452b", "var(--axis)": "#1d1d1f", "var(--tile)": "#fbfaf6", "var(--b0)": "#cfe3ea", "var(--b1)": "#9cc3cf", "var(--b2)": "#6fa6ba", "var(--b3)": "#4f8aa1", "var(--b4)": "#3d7891" };
+  const hex = c => HEX[c] || c;
+  function col(c) { return new THREE.Color(hex(c)).convertSRGBToLinear(); }
+  let THREE, renderer, scene, camera, controls, root, board, ghost, table, reticle, hitSource = null, placed = false;
+  let shown = false, loading = null, active = false, mode = "3d", tiles = {}, pieceMeshes = [], flashP = null, flashT = 0, panel = null, trayG = null;
+  const box = $("view3d");
+  const msg = t => { $("xrmsg").textContent = t; };
+
+  function load(src) { return new Promise((ok, no) => { const s = document.createElement("script"); s.src = src; s.onload = ok; s.onerror = () => no(new Error(src)); document.head.appendChild(s); }); }
+  async function ensure() {
+    if (THREE) return;
+    if (!loading) loading = (async () => {
+      await load(LIB + "build/three.min.js"); await load(LIB + "examples/js/controls/OrbitControls.js");
+      THREE = window.THREE; init();
+    })();
+    await loading;
+  }
+  function init() {
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(2, devicePixelRatio)); renderer.outputEncoding = THREE.sRGBEncoding;
+    box.appendChild(renderer.domElement);
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(35, 1, 0.01, 50);
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x8a8070, 0.8));
+    const d = new THREE.DirectionalLight(0xffffff, 0.75); d.position.set(-0.3, 1, 0.6); scene.add(d);
+    const d2 = new THREE.DirectionalLight(0xffffff, 0.25); d2.position.set(0.5, 0.6, -0.4); scene.add(d2);
+    table = new THREE.Mesh(new THREE.PlaneGeometry(4, 4), new THREE.MeshStandardMaterial({ color: col("#dcd7cb"), roughness: 1 }));
+    table.rotation.x = -Math.PI / 2; table.position.y = -0.0005; scene.add(table);
+    root = new THREE.Group(); root.scale.setScalar(UNIT); scene.add(root);
+    board = new THREE.Group(); root.add(board);
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true; controls.maxPolarAngle = Math.PI / 2 - 0.05; controls.minDistance = 0.08; controls.maxDistance = 2;
+    resetView();
+    new ResizeObserver(resize).observe(box); resize();
+    const el = renderer.domElement;
+    let down = null;
+    el.addEventListener("pointerdown", e => { down = { x: e.clientX, y: e.clientY }; });
+    el.addEventListener("pointermove", e => { if (G.armed && mode === "3d") hover(rayFromEvent(e)); });
+    el.addEventListener("pointerup", e => { if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) < 7) act(rayFromEvent(e)); down = null; });
+    renderer.setAnimationLoop(loop);
+    $("bar").onclick = startAR; $("bvr").onclick = startVR; $("breset").onclick = resetView;
+    $("xalt").onclick = () => G.alt(); $("xask").onclick = () => G.ask(); $("xmove").onclick = () => { placed = false; root.visible = false; };
+    $("xend").onclick = () => renderer.xr.getSession() && renderer.xr.getSession().end();
+    $("xbar").addEventListener("beforexrselect", e => e.preventDefault());   // dugme dokunuslari XR secimi olmasin; bos ekran dokunuslari olsun
+    checkXR();
+  }
+  async function checkXR() {
+    if (!navigator.xr) { $("bar").disabled = $("bvr").disabled = true; msg("Bu tarayıcıda WebXR yok. AR için Android'de Chrome, VR için Quest tarayıcısı gerekir."); return; }
+    let ar = false, vr = false;
+    try { ar = await navigator.xr.isSessionSupported("immersive-ar"); } catch (e) { }
+    try { vr = await navigator.xr.isSessionSupported("immersive-vr"); } catch (e) { }
+    $("bar").disabled = !ar; $("bvr").disabled = !vr;
+    msg(ar || vr ? (ar ? "AR hazır: düğmeye bas, telefonu masaya doğrult." : "VR hazır.") : (window.top !== window ? "Bu sayfa claude.ai içinde açık; çerçeve kamera ve XR izni vermiyor. AR ve VR için sayfanın bağımsız kopyasını https adresinden aç." : "Bu cihaz AR ya da VR oturumu açamıyor."));
+  }
+  function resize() {
+    if (!renderer || renderer.xr.isPresenting) return;
+    const w = box.clientWidth || 600, h = box.clientHeight || 400;
+    renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+  }
+  function resetView() {
+    if (!camera) return;
+    const N = G.S.N, wid = (N + 3) * UNIT, hf = 2 * Math.atan(Math.tan(camera.fov * Math.PI / 360) * camera.aspect);
+    const dist = Math.max(wid / 2 / Math.tan(hf / 2), 7 * UNIT / Math.tan(camera.fov * Math.PI / 360)), el = 0.95;
+    camera.position.set(0, dist * Math.sin(el), dist * Math.cos(el)); controls.target.set(0, 0, 0.6 * UNIT); controls.update();
+  }
+
+  // ---------- sahne kurulumu ----------
+  const mats = {};
+  const mat = c => mats[c] || (mats[c] = new THREE.MeshStandardMaterial({ color: col(c), roughness: 0.7 }));
+  function pieceGeo(r) {
+    const R = r + 0.5 + 0.07, s = new THREE.Shape();
+    s.moveTo(-R, 0);
+    for (let j = 1; j <= r; j++) { const xj = 2 * j - r - 1, n = 0.59; s.lineTo(xj - n, 0); s.absarc(xj, 0, n, Math.PI, 0, true); }
+    s.lineTo(R, 0); s.absarc(0, 0, R, 0, Math.PI, false);
+    const g = new THREE.ExtrudeGeometry(s, { depth: T, bevelEnabled: false, curveSegments: 40 });
+    g.rotateX(-Math.PI / 2); return g;
+  }
+  function ridgeGeo(r) {
+    const rho = r + 0.5, ro = rho + RW / 2, ri = rho - RW / 2, pts = [];
+    const ao = Math.asin(Math.min(1, TRIM / ro)), ai = Math.asin(Math.min(1, TRIM / ri)), K = 48;
+    for (let k = 0; k <= K; k++) { const a = ao + (Math.PI - 2 * ao) * k / K; pts.push(new THREE.Vector2(ro * Math.cos(a), ro * Math.sin(a))); }
+    for (let k = 0; k <= K; k++) { const a = Math.PI - ai - (Math.PI - 2 * ai) * k / K; pts.push(new THREE.Vector2(ri * Math.cos(a), ri * Math.sin(a))); }
+    const g = new THREE.ExtrudeGeometry(new THREE.Shape(pts), { depth: RH, bevelEnabled: false });
+    g.rotateX(-Math.PI / 2); g.translate(0, T, 0); return g;
+  }
+  const geoCache = {};
+  const cached = (k, f) => geoCache[k] || (geoCache[k] = f());
+  function tileTexture(p, st, at, col) {
+    const W = 136, H = 124, cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+    const c = cv.getContext("2d");
+    c.fillStyle = "#fbfaf6"; c.fillRect(0, 0, W, H);
+    c.setTransform(W / (2 * G.HW), 0, 0, H / (2 * G.HH), -(p - G.HW) * W / (2 * G.HW), H / 2);
+    for (const o of G.tileOps(p, st, at, col)) { c.strokeStyle = hex(o.c); c.lineWidth = o.w; c.stroke(new Path2D(o.d)); }
+    const t = new THREE.CanvasTexture(cv); t.flipY = false; t.encoding = THREE.sRGBEncoding; t.anisotropy = 4; return t;
+  }
+  function clear(g) { while (g.children.length) { const o = g.children.pop(); o.traverse(x => { if (x.userData.top) { x.userData.top.map.dispose(); x.userData.top.dispose(); } if (x.userData.own) x.geometry.dispose(); if (x.userData.ownMat) x.material.dispose(); }); } }
+  function build() {
+    const S = G.S, N = S.N, sc = G.scene(), cx = (N + 1) / 2;
+    clear(board); tiles = {}; pieceMeshes = [];
+    const armed = G.armed;
+    S.pieces.forEach((q, i) => {
+      const grp = new THREE.Group(); grp.position.x = q.a + q.r + 0.5 - cx; if (q.side < 0) grp.rotation.y = Math.PI;
+      const m = new THREE.Mesh(cached("p" + q.r, () => pieceGeo(q.r)), mat(G.FILL[Math.min(q.r, 4)]));
+      const rg = new THREE.Mesh(cached("r" + q.r, () => ridgeGeo(q.r)), mat(sc.arcCol(q)));
+      m.userData.i = rg.userData.i = i;
+      if (armed && armed.from === i) { m.material = m.material.clone(); m.material.transparent = true; m.material.opacity = 0.3; m.userData.ownMat = true; }
+      grp.add(m, rg); board.add(grp); pieceMeshes.push(m, rg);
+    });
+    // serit
+    const strip = new THREE.Mesh(new THREE.BoxGeometry(N + 0.1, SH, 0.68), mat("#cfcac0")); strip.userData.own = true;
+    strip.position.set(0, T + SH / 2, 0); board.add(strip);
+    const seg = (x0, x1, c) => { if (x1 <= x0) return; const m = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0, 0.01, G.SW), mat(sc.axCol(c))); m.userData.own = true; m.geometry.translate(0, 0, 0); m.position.set((x0 + x1) / 2 - cx, T + SH + 0.005, 0); board.add(m); };
+    seg(0.45, 1 - G.HW, N); seg(N + G.HW, N + 0.55, N);
+    for (let p = 1; p < N; p++) seg(p + G.HW, p + 1 - G.HW, p);
+    // kapanis yayi: kesikli
+    const lowR = Math.max(1.0, ...S.pieces.filter(q => q.side < 0).map(q => q.r + 0.57)) + 0.45;
+    const path = new THREE.CurvePath();
+    path.add(new THREE.CubicBezierCurve(new THREE.Vector2(0.45, 0), new THREE.Vector2(-0.25, 0), new THREE.Vector2(-0.25, lowR), new THREE.Vector2(1, lowR)));
+    path.add(new THREE.LineCurve(new THREE.Vector2(1, lowR), new THREE.Vector2(N, lowR)));
+    path.add(new THREE.CubicBezierCurve(new THREE.Vector2(N, lowR), new THREE.Vector2(N + 1.25, lowR), new THREE.Vector2(N + 1.25, 0), new THREE.Vector2(N + 0.55, 0)));
+    const L = path.getLength(), dm = mat(sc.axCol(N));
+    for (let s = 0; s < L; s += 0.38) {
+      const a = path.getPointAt(s / L), b = path.getPointAt(Math.min(1, (s + 0.22) / L));
+      const m = new THREE.Mesh(new THREE.BoxGeometry(Math.hypot(b.x - a.x, b.y - a.y), 0.012, 0.07), dm); m.userData.own = true;
+      m.position.set((a.x + b.x) / 2 - cx, 0.006, (a.y + b.y) / 2); m.rotation.y = -Math.atan2(b.y - a.y, b.x - a.x); board.add(m);
+    }
+    // taslar
+    for (let p = 1; p <= N; p++) {
+      const st = S.states[p - 1], tex = tileTexture(p, st, sc.at(p), sc.tileCol(p));
+      const side = mat("#f3f1ea");
+      const top = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.6 });
+      const m = new THREE.Mesh(cached("tile", () => new THREE.BoxGeometry(2 * G.HW, TT, 2 * G.HH)), [side, side, top, side, side, side]);
+      m.position.set(p - cx, T + SF + TT / 2, 0); m.userData.p = p; m.userData.top = top;
+      if (p === flashP && performance.now() - flashT < 260) m.rotation.x = Math.PI / 2 * (1 - (performance.now() - flashT) / 260);
+      board.add(m); tiles[p] = m;
+    }
+    // tutulan parcanin gölgesi
+    ghost = null; ghostKey = ""; updateGhost();
+    if (trayG) buildTray();
+    if (panel) drawPanel();
+    $("xrt").textContent = plain();
+  }
+  function plain() {
+    const I = G.info(); if (!I.complete) return "Önce her noktayı doldur.";
+    if (!G.S.open) return "“Hangi düğüm?”e bas.";
+    const sub = "₀₁₂₃₄₅₆₇₈₉";
+    const [big] = G.label(I.id);
+    return big.replace(/<sub>(\d+)<\/sub>/g, (m, d) => [...d].map(x => sub[x]).join("")).replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim() + " · det " + I.inv.det + " · " + I.inv.comps + " bileşen";
+  }
+
+  // ---------- secme ----------
+  const ray = () => new THREE.Raycaster();
+  function rayFromEvent(e) {
+    const r = renderer.domElement.getBoundingClientRect(), rc = ray();
+    rc.setFromCamera(new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1), camera); return rc;
+  }
+  function boardPoint(rc) {                       // tahta duzlemi (y = T) ile kesisim, tahta birimlerinde
+    const inv = new THREE.Matrix4().copy(board.matrixWorld).invert();
+    const o = rc.ray.origin.clone().applyMatrix4(inv), d = rc.ray.direction.clone().transformDirection(inv);
+    if (Math.abs(d.y) < 1e-6) return null;
+    const t = (T - o.y) / d.y; if (t < 0) return null;
+    return { xu: o.x + t * d.x + (G.S.N + 1) / 2, side: (o.z + t * d.z) < 0 ? 1 : -1 };
+  }
+  let ghostKey = "";
+  function updateGhost() {
+    const pv = G.preview, k = pv ? [pv.r, pv.a, pv.side, pv.ok].join() : "";
+    if (k === ghostKey) return; ghostKey = k;
+    if (ghost) { board.remove(ghost); ghost.material.dispose(); ghost = null; }
+    if (!pv) return;
+    ghost = new THREE.Mesh(cached("p" + pv.r, () => pieceGeo(pv.r)), new THREE.MeshStandardMaterial({ color: pv.ok ? 0x1a8f55 : 0xd8452b, transparent: true, opacity: 0.45 }));
+    ghost.position.set(pv.a + pv.r + 0.5 - (G.S.N + 1) / 2, 0.02, 0); if (pv.side < 0) ghost.rotation.y = Math.PI; board.add(ghost);
+  }
+  function hover(rc) { const b = boardPoint(rc); if (b) { G.setPreview(b.xu, b.side); updateGhost(); } }
+  function act(rc) {
+    if (trayG) { const h = rc.intersectObjects(trayG.children, true).find(x => x.object.userData.r != null); if (h) { const r = h.object.userData.r; G.armed = G.armed && G.armed.r === r && G.armed.from == null ? null : { r, from: null }; G.render(); return true; } }
+    const hit = rc.intersectObjects(board.children, true).find(h => h.object.userData.p || h.object.userData.i != null);
+    const u = hit ? hit.object.userData : {};
+    if (G.armed) {
+      if (u.i != null && G.armed.from === u.i) { G.armed = null; G.clearPreview(); G.render(); return true; }
+      const b = boardPoint(rc); if (b) { G.dropAt(b.xu, b.side); G.clearPreview(); G.render(); }
+      return true;
+    }
+    if (u.p) { G.tileAct(u.p); return true; }
+    if (u.i != null) { G.pick(u.i); return true; }
+    return false;
+  }
+
+  // ---------- XR ----------
+  const ctrl = [];
+  function setupControllers(withRays) {
+    for (let k = 0; k < 2; k++) {
+      const c = renderer.xr.getController(k);
+      c.addEventListener("select", () => onSelect(c));
+      if (withRays) {
+        const g = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, -1)]);
+        const l = new THREE.Line(g, new THREE.LineBasicMaterial({ color: 0xffffff })); l.scale.z = 3; l.name = "ray"; c.add(l);
+      }
+      scene.add(c); ctrl.push(c);
+    }
+  }
+  function ctrlRay(c) {
+    const rc = ray(), m = new THREE.Matrix4().extractRotation(c.matrixWorld);
+    rc.ray.origin.setFromMatrixPosition(c.matrixWorld); rc.ray.direction.set(0, 0, -1).applyMatrix4(m); return rc;
+  }
+  function onSelect(c) {
+    if (mode === "ar" && !placed) {
+      if (reticle.visible) {
+        root.position.setFromMatrixPosition(reticle.matrix);
+        const cam = renderer.xr.getCamera(camera), cp = new THREE.Vector3().setFromMatrixPosition(cam.matrixWorld);
+        root.rotation.set(0, Math.atan2(cp.x - root.position.x, cp.z - root.position.z), 0);
+        root.visible = true; placed = true; reticle.visible = false;
+      }
+      return;
+    }
+    const rc = ctrlRay(c);
+    if (panel && panelHit(rc)) return;
+    act(rc);
+  }
+  async function begin(kind) {
+    await ensure();
+    const opt = kind === "ar"
+      ? { requiredFeatures: ["hit-test"], optionalFeatures: ["dom-overlay", "local-floor"], domOverlay: { root: $("xrov") } }
+      : { optionalFeatures: ["local-floor", "bounded-floor", "hand-tracking"] };
+    let session;
+    try { session = await navigator.xr.requestSession("immersive-" + kind, opt); }
+    catch (e) { msg("Oturum açılamadı: " + e.message); return; }
+    mode = kind; renderer.xr.enabled = true;
+    renderer.xr.setReferenceSpaceType(kind === "ar" ? "local" : "local-floor");
+    await renderer.xr.setSession(session);
+    if (!ctrl.length) setupControllers(kind === "vr");
+    ctrl.forEach(c => { const l = c.getObjectByName("ray"); if (l) l.visible = kind === "vr"; });
+    scene.background = null; buildTray();
+    if (kind === "ar") {
+      $("xrov").style.display = "flex"; table.visible = false; root.visible = false; placed = false;
+      reticle = reticle || (() => { const m = new THREE.Mesh(new THREE.RingGeometry(0.05, 0.065, 40).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xffffff })); m.matrixAutoUpdate = false; m.visible = false; scene.add(m); return m; })();
+      const vs = await session.requestReferenceSpace("viewer");
+      hitSource = await session.requestHitTestSource({ space: vs });
+      root.scale.setScalar(UNIT);
+    } else {
+      scene.background = new THREE.Color(0x20262a); table.visible = true; table.material.color.copy(col("#3a3f42"));
+      const desk = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.04, 0.6), new THREE.MeshStandardMaterial({ color: 0xb08a5a, roughness: 0.8 }));
+      desk.position.set(0, 0.73, -0.55); desk.name = "desk"; scene.add(desk);
+      root.position.set(0, 0.751, -0.5); root.rotation.set(0, 0, 0); root.scale.setScalar(UNIT * 1.4 * 16 / Math.max(16, G.S.N + 2)); root.visible = true;
+      makePanel();
+    }
+    session.addEventListener("end", () => {
+      mode = "3d"; hitSource = null; $("xrov").style.display = "none"; if (reticle) reticle.visible = false;
+      const desk = scene.getObjectByName("desk"); if (desk) scene.remove(desk);
+      if (panel) { scene.remove(panel.mesh); panel = null; } if (trayG) { root.remove(trayG); trayG = null; }
+      table.visible = true; table.material.color.copy(col("#dcd7cb")); root.visible = true; root.position.set(0, 0, 0); root.rotation.set(0, 0, 0); root.scale.setScalar(UNIT);
+      renderer.xr.enabled = false; applyBg(); resize(); resetView(); build();
+    });
+    build();
+  }
+  const startAR = () => begin("ar"), startVR = () => begin("vr");
+  // XR icinde parca kutusu: tahtanin onunde (alt tarafta) birer ornek
+  function buildTray() {
+    if (mode === "3d") return;
+    if (!trayG) { trayG = new THREE.Group(); root.add(trayG); }
+    clear(trayG);
+    const S = G.S, rs = S.mode === "fiziksel" ? [0, 1, 2, 4] : [0, 1, 2, 3, 4].filter(r => 2 * r + 2 <= S.N);
+    const lowR = Math.max(1.0, ...S.pieces.filter(q => q.side < 0).map(q => q.r + 0.57)) + 1.3;
+    let x = -(G.S.N + 1) / 2 + 0.6;
+    for (const r of rs) {
+      const left = (S.mode === "fiziksel" ? ({ 0: 13, 1: 1, 2: 1, 4: 1 })[r] : Infinity) - S.pieces.filter(q => q.r === r).length;
+      const R = r + 0.57, m = new THREE.Mesh(cached("p" + r, () => pieceGeo(r)), left > 0 ? mat(G.FILL[Math.min(r, 4)]) : mat("#9a9a9a"));
+      m.position.set(x + R, 0, lowR + R + 0.2); m.rotation.y = Math.PI; m.userData.r = left > 0 ? r : null;
+      if (G.armed && G.armed.from == null && G.armed.r === r) { m.position.y = 0.25; }
+      trayG.add(m); x += 2 * R + 0.5;
+    }
+  }
+  // VR paneli
+  const BTN = [["alt", "Alterne"], ["ask", "Hangi düğüm?"], ["tool", "Çevir / Düzleştir"], ["rnd", "Rastgele menderes"], ["end", "Çık"]];
+  function makePanel() {
+    const cv = document.createElement("canvas"); cv.width = 1024; cv.height = 560;
+    const tex = new THREE.CanvasTexture(cv); tex.encoding = THREE.sRGBEncoding;
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 0.4375), new THREE.MeshBasicMaterial({ map: tex }));
+    mesh.position.set(0, 1.32, -0.95); mesh.rotation.x = -0.2; scene.add(mesh);
+    panel = { cv, tex, mesh }; drawPanel();
+  }
+  function drawPanel() {
+    const { cv, tex } = panel, c = cv.getContext("2d");
+    c.fillStyle = "#14191c"; c.fillRect(0, 0, 1024, 560);
+    c.fillStyle = "#fff"; c.font = "600 44px Inter, sans-serif"; c.fillText("Menderes düğüm yapbozu", 40, 72);
+    c.font = "500 36px Inter, sans-serif"; c.fillStyle = "#e7ecee";
+    const t = plain(); let y = 140, line = "";
+    for (const w of t.split(" ")) { if (c.measureText(line + w).width > 940) { c.fillText(line, 40, y); y += 46; line = ""; } line += w + " "; }
+    c.fillText(line, 40, y);
+    c.font = "500 26px Inter, sans-serif"; c.fillStyle = "#9aa7ad"; c.fillText("Araç: " + (G.S.tool === "flip" ? "çevir" : "düzleştir") + " · taşa ya da parçaya ışını tutup tetiğe bas", 40, 260);
+    BTN.forEach(([k, l], i) => { const x = 40 + (i % 3) * 320, yy = 300 + Math.floor(i / 3) * 120; c.fillStyle = k === "end" ? "#d8452b" : "#2c363b"; c.fillRect(x, yy, 300, 96); c.fillStyle = "#fff"; c.font = "600 32px Inter, sans-serif"; c.fillText(l, x + 20, yy + 60); });
+    tex.needsUpdate = true;
+  }
+  function panelHit(rc) {
+    const h = rc.intersectObject(panel.mesh)[0]; if (!h) return false;
+    const x = h.uv.x * 1024, y = (1 - h.uv.y) * 560;
+    BTN.forEach(([k], i) => {
+      const bx = 40 + (i % 3) * 320, by = 300 + Math.floor(i / 3) * 120;
+      if (x >= bx && x <= bx + 300 && y >= by && y <= by + 96) {
+        if (k === "alt") G.alt(); else if (k === "ask") G.ask();
+        else if (k === "tool") { G.S.tool = G.S.tool === "flip" ? "smooth" : "flip"; G.render(); }
+        else if (k === "rnd") $("rnd").click(); else if (k === "end") renderer.xr.getSession().end();
+      }
+    });
+    return true;
+  }
+
+  // ---------- dongu ----------
+  function loop(t, frame) {
+    if (mode === "3d") controls.update();
+    if (frame && hitSource && mode === "ar" && !placed) {
+      const res = frame.getHitTestResults(hitSource);
+      if (res.length) { const pose = res[0].getPose(renderer.xr.getReferenceSpace()); reticle.visible = true; reticle.matrix.fromArray(pose.transform.matrix); }
+      else reticle.visible = false;
+    }
+    if (flashP && tiles[flashP]) {
+      const k = (performance.now() - flashT) / 260;
+      tiles[flashP].rotation.x = k < 1 ? Math.PI / 2 * (1 - k) : 0; if (k >= 1) flashP = null;
+    }
+    if (active || renderer.xr.isPresenting) renderer.render(scene, camera);
+  }
+  function applyBg() { const bg = getComputedStyle(document.body).backgroundColor; scene.background = new THREE.Color(bg.startsWith("rgb") ? bg : "#efede7").convertSRGBToLinear(); }
+  return {
+    get active() { return active; },
+    async show() {
+      active = true; box.style.display = "block";
+      try { await ensure(); } catch (e) { box.innerHTML = `<p style="padding:20px">3B kitaplığı yüklenemedi: ${e.message}</p>`; return; }
+      applyBg(); resize(); if (!shown) { resetView(); shown = true; } build();
+    },
+    hide() { active = false; },
+    update() { if (THREE && active) build(); },
+    flash(p) { flashP = p; flashT = performance.now(); },
+    _proj(x, y, z) { const v = new THREE.Vector3(x - (G.S.N + 1) / 2, y, z).applyMatrix4(board.matrixWorld).project(camera); const r = renderer.domElement.getBoundingClientRect(); return [r.left + (v.x + 1) / 2 * r.width, r.top + (1 - v.y) / 2 * r.height]; },
+  };
+})();
+
+</script>
+</body>
+</html>
