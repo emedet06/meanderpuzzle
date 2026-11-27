@@ -2,17 +2,11 @@
 
 İnce menderesler ve iki köprülü bağlar üzerine, tarayıcıda oynanan etkileşimli bir yapboz. Parçalar eksenin iki yanına dizilerek bir menderes kurulur. Kesişimlerdeki anahtar taşları, menderesin mi eksenin mi üstten geçeceğini belirler. Tek bir dokunuşla hangi düğümün ya da bağın kurulduğu görülür: bileşen sayısı, determinant, bağlanma sayısı, Jones polinomu ve Conway gösterimi.
 
-> Makale künyesi: buraya yapının dayandığı makalenin künyesi gelecek.
+> Makale künyesi: submitted to journal.
 
 Bütün uygulama tek bir dosyadır: `index.html`.
 
-## Açmak
 
-- **2B ve 3B:** `index.html` dosyasını güncel bir tarayıcıda (Chrome, Edge, Firefox, Safari) açmak yeterli. three.js ve yazı tipleri internetten yüklendiği için bağlantı gerekir.
-- **AR ve VR:** Sayfanın bir **https** adresinden açılması gerekir; tarayıcılar XR'ı ve kamerayı yalnız güvenli adreslerde açar. GitHub Pages ile:
-  1. Yeni bir açık GitHub deposuna `index.html` ve bu `README.md` dosyasını yükle.
-  2. Settings → Pages bölümünde kaynak olarak `main` dalını seç ve kaydet.
-  3. Birkaç dakika sonra sayfa `https://kullaniciadi.github.io/depoadi/` adresinde açılır.
 
 ## Nasıl oynanır
 
